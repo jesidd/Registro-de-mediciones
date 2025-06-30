@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+
+body {
+    width: screen;
+    height: screen;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.slice-start {
+    clip-path: polygon(0 calc(100% - 1px), 100% 0, 0 0);
+    padding-top: 5.59%;
+    margin-bottom: -1px;
+    background-color: #12273e;
+}
+
+.slice-end {
+    clip-path: polygon(0 calc(100% - 1px), 0 100%, 100% 100%, 100% 0);
+    background-color: #12273e;
+    padding-bottom: 5.59%;
+    position: absolute;
+    bottom: 0;
+    margin-bottom: -1px;
+    width: 100%;
+}
+
+label {
+    display: block;
+}
+
+.inputCampoForm {
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    display: block;
+    width: 100%;
+    padding: 4.875px 9.75px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    appearance: none;
+    transition: all;
+    transition-duration: .15s;
+}
+
+.inputCampoForm:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+}
+
+.checkBoxForm {
+    border: 1px solid #ced4da;
+    border-radius: 3.25px;
+    display: block;
+    width: 13px;
+    height: 13px;
+    background-color: #fff;
+    background-size: contain;
+    appearance: none;
+    cursor: pointer;
+    position: relative;
+    transition: all;
+    transition-duration: 200ms;
+}
+
+.checkBoxForm:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+}
+
+.checkBoxForm:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+    cursor: pointer;
+}
+
+.checkBoxForm:checked::after {
+    content: "✓";
+    position: absolute;
+    top: -4px;
+    left: 0;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+}
