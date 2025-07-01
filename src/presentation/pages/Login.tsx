@@ -14,7 +14,7 @@ export default function Login() {
             <div className="hidden"><p>Tu dirección de correo electronico o contraseña es incorrecto</p></div>
             <div>
               <CampoForm labelName="Email" labelText="Dirección de correo electrónico" nameInput="Email Addres"/>
-              <CampoForm labelName="Password" labelText="Contraseña" nameInput="Password"/>
+              <CampoForm labelName="Password" labelText="Contraseña" nameInput="Password" typeInput="Password"/>
               <CheckboxForm labelName="rememberme" labelText="Recordar sesión" nameInput="rememberme"/>
               <ButtonLayout typeButton="submit" text="Iniciar sesión" />
               <a href="#" className="text-[.7em] text-[#0d6efd]"><span>¿Olvidó su contraseña?</span></a>

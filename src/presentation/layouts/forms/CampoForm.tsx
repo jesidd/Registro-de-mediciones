@@ -2,10 +2,12 @@ export default function CampoForm({
   labelName,
   labelText,
   nameInput,
+  typeInput,
 }: {
   labelName: string;
   nameInput: string;
   labelText: string;
+  typeInput?: string;
 }) {
   return (
     <>
@@ -17,7 +19,7 @@ export default function CampoForm({
           <span>{labelText}</span>
         </label>
         <input
-          type="text"
+          type={typeInput || "text"}
           id={labelName}
           name={nameInput}
           className="inputCampoForm"
