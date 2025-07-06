@@ -1,4 +1,4 @@
-import { authUseCase } from "../../infrastructure/di/useCases";
+import { authUseCase } from "../../infrastructure/di/AuthDI";
 import { setToken, removeToken, setUseSession } from "../../infrastructure/utils/storage/Token";
 import { useCallback } from "react";
 
