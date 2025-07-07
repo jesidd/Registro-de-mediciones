@@ -9,9 +9,7 @@ import {
 } from "../../assets/icons/icons";
 import type { Client } from "../../domain/entities/Client";
 import UseClient from "../hooks/UseClient";
-import { useForm, type SubmitHandler } from "react-hook-form";
-
-
+import {  useForm, type SubmitHandler } from "react-hook-form";
 
 interface CantCustomerType {
   [tipo: string]: number;
@@ -19,7 +17,7 @@ interface CantCustomerType {
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Client[]>([]);
-  
+
   const {
     getClients,
     createClient,
@@ -27,7 +25,7 @@ export default function Customers() {
     deleteClient,
     getTotalClientsByType,
   } = UseClient();
-  
+
   const [cantCustomersType, setCantCustomersType] = useState<CantCustomerType>({
     constructora: 0,
     vidreria: 0,
@@ -35,23 +33,10 @@ export default function Customers() {
 
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [refreshClientes, setRefreshClientes] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Client>({
-    id: 0,
-    nombre: "",
-    apellido: "",
-    tipoCliente: "CONSTRUCTORA",
-    email: "",
-    telefono: "",
-    direccion: "",
-    gasto: 0,
-    compras: []
-  });
+  const [selectedCustomer, setSelectedCustomer] = useState<Client | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset
-  } = useForm<Client>({defaultValues: {gasto:0},
+  const { register, handleSubmit, reset } = useForm<Client>({
+    defaultValues: { gasto: 0 },
     shouldFocusError: true,
   });
 
@@ -97,25 +82,34 @@ export default function Customers() {
   };
 
   const handleSaveCustomer: SubmitHandler<Client> = async (data) => {
-    try{
+    setShowNewCustomer(false);
+    try {
       const newClient = await createClient(data);
       console.log("nuevo cliente", newClient);
-      reset();
-      setShowNewCustomer(false);
       setRefreshClientes(!refreshClientes);
-    }catch(error){
+      reset();
+    } catch (error) {
       console.log(error);
     }
   };
 
   const handleUpdateCustomer: SubmitHandler<Client> = async (data) => {
-    try{
-      const modifiedClient = await updateClient({...data, id: selectedCustomer?.id});
+    setShowNewCustomer(false);
+
+    if (!selectedCustomer) {
+      console.error("No hay cliente seleccionado para actualizar.");
+      return;
+    }
+    try {
+      const modifiedClient = await updateClient({
+        ...data,
+        id: selectedCustomer.id,
+      });
       console.log("cliente modificado", modifiedClient);
-      reset();
-      setShowNewCustomer(false);
       setRefreshClientes(!refreshClientes);
-    }catch(error){
+      setSelectedCustomer(null);
+      reset();
+    } catch (error) {
       console.log(error);
     }
   };
@@ -124,6 +118,7 @@ export default function Customers() {
     try {
       await deleteClient(customerId);
       setRefreshClientes(!refreshClientes);
+      setSelectedCustomer(null);
       console.log("Cliente eliminado con éxito");
     } catch (error) {
       console.error("Error al eliminar el cliente:", error);
@@ -131,13 +126,18 @@ export default function Customers() {
   };
 
   const deleteCustomer = (customerId: number) => {
-    if (confirm('¿Está seguro de que desea eliminar este cliente?')) {
+    if (confirm("¿Está seguro de que desea eliminar este cliente?")) {
       handleDeleteCustomer(customerId);
     }
   };
 
-  const editCustomer = (customer: Client) => {
+  const handleCancel = () => {
+    setSelectedCustomer(null);
+    setShowNewCustomer(false);
     reset();
+  };
+
+  const editCustomer = (customer: Client) => {
     setSelectedCustomer(customer);
     setShowNewCustomer(true);
   };
@@ -204,7 +204,8 @@ export default function Customers() {
                           {customer.nombre
                             .split(" ")
                             .map((n) => n[0])
-                            .join("").toUpperCase()}
+                            .join("")
+                            .toUpperCase()}
                         </span>
                       </div>
                     </div>
@@ -240,7 +241,7 @@ export default function Customers() {
                 <div className="flex justify-between items-center text-xs">
                   <div>
                     <span className="font-medium">
-                      {customer.compras? customer.compras.length : "0"}
+                      {customer.compras ? customer.compras.length : "0"}
                     </span>{" "}
                     órdenes
                   </div>
@@ -251,7 +252,10 @@ export default function Customers() {
 
                 <div className="flex justify-between items-center pt-2 border-t border-[#e5e7eb]">
                   <div className="text-xs text-gray-500">
-                    Última orden: {customer.compras.length? customer.compras.at(-1)?.fechaRegistro : "N/A"}
+                    Última orden:{" "}
+                    {customer.compras.length
+                      ? customer.compras.at(-1)?.fechaRegistro
+                      : "N/A"}
                   </div>
                   <div className="flex items-center space-x-2">
                     <button className="text-blue-600 hover:text-blue-900">
@@ -315,7 +319,8 @@ export default function Customers() {
                             {customer.nombre
                               .split(" ")
                               .map((n) => n[0])
-                              .join("").toUpperCase()}
+                              .join("")
+                              .toUpperCase()}
                           </span>
                         </div>
                       </div>
@@ -356,7 +361,7 @@ export default function Customers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {customer.compras? customer.compras.length : "0"}
+                      {customer.compras ? customer.compras.length : "0"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -366,7 +371,9 @@ export default function Customers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {customer.compras.length? customer.compras.at(-1)?.fechaRegistro : "N/A"}
+                      {customer.compras.length
+                        ? customer.compras.at(-1)?.fechaRegistro
+                        : "N/A"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -397,7 +404,12 @@ export default function Customers() {
 
       {/* New/Edit Customer Modal */}
       {showNewCustomer && (
-        <form onSubmit={handleSubmit(selectedCustomer ? handleUpdateCustomer: handleSaveCustomer)} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50">
+        <form
+          onSubmit={handleSubmit(
+            selectedCustomer ? handleUpdateCustomer : handleSaveCustomer
+          )}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50"
+        >
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[95vh] overflow-y-auto">
             <div className="p-4 md:p-6 border-b">
               <div className="flex justify-between items-center">
@@ -406,7 +418,9 @@ export default function Customers() {
                 </h3>
                 <button
                   className="text-gray-400 hover:text-gray-600"
-                  onClick={() =>{setShowNewCustomer(false)}}
+                  onClick={() => {
+                    handleCancel();
+                  }}
                 >
                   <X className="h-5 w-5 md:h-6 md:w-6" />
                 </button>
@@ -422,9 +436,9 @@ export default function Customers() {
                   <input
                     type="text"
                     defaultValue={selectedCustomer?.nombre || ""}
-
-                    {...register("nombre", { required: "El nombre es requerido" })}
-                    
+                    {...register("nombre", {
+                      required: "El nombre es requerido",
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                     placeholder="Nombre del cliente"
                   />
@@ -435,7 +449,9 @@ export default function Customers() {
                   </label>
                   <select
                     defaultValue={selectedCustomer?.tipoCliente || ""}
-                    {...register("tipoCliente", { required: "Tipo de cliente es requerido"})}
+                    {...register("tipoCliente", {
+                      required: "Tipo de cliente es requerido",
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                   >
                     {customerTypes.map((type) => (
@@ -455,7 +471,9 @@ export default function Customers() {
                   <input
                     type="email"
                     defaultValue={selectedCustomer?.email || ""}
-                    {...register("email", { required: "El correo electronico es requerido"} )}
+                    {...register("email", {
+                      required: "El correo electronico es requerido",
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                     placeholder="email@cliente.com"
                   />
@@ -467,7 +485,9 @@ export default function Customers() {
                   <input
                     type="tel"
                     defaultValue={selectedCustomer?.telefono || ""}
-                    {...register ("telefono",{ required: "Numero de telefono requerido"})}
+                    {...register("telefono", {
+                      required: "Numero de telefono requerido",
+                    })}
                     className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                     placeholder="+57 999 123 456"
                   />
@@ -480,7 +500,9 @@ export default function Customers() {
                 </label>
                 <textarea
                   defaultValue={selectedCustomer?.direccion || ""}
-                  {...register ("direccion", { required: "La direción es requerida"})}
+                  {...register("direccion", {
+                    required: "La direción es requerida",
+                  })}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                   rows={3}
                   placeholder="Dirección completa del cliente"
@@ -489,7 +511,9 @@ export default function Customers() {
 
               <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                 <button
-                  onClick={() => {setShowNewCustomer(false)}}
+                  onClick={() => {
+                    handleCancel();
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                 >
                   Cancelar
