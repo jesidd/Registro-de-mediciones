@@ -50,7 +50,7 @@ export default function Customers() {
   const {
     register,
     handleSubmit,
-    formState: { errors }, reset
+    reset
   } = useForm<Client>({defaultValues: {gasto:0},
     shouldFocusError: true,
   });
