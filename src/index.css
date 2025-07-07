@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer base{
+    *{
+        @apply border-[#e5e7eb];
+    }
+}
+
 
 body {
     width: screen;
@@ -22,6 +28,8 @@ body {
     padding-bottom: 5.59%;
     position: absolute;
     bottom: 0;
+    right: 0;
+    left: 2px;
     margin-bottom: -1px;
     width: 100%;
 }

@@ -11,7 +11,7 @@ export default function AuthLayout({
         <HeaderAuth />
         <div className="slice-start"></div>
         <main className="mx-auto min-h-[70%]">{children}</main>
-        <div className="hidden md:block slice-end"></div>
+        <div className="hidden md:block slice-end mr-[2px]"></div>
       </div>
     </div>
   );
