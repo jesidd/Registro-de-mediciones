@@ -1,4 +1,4 @@
-import { Plus, Eye, Edit, Trash2, Phone, Mail, X, Save } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Phone, Mail, X, Save, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import CardInfo1 from "./CardsInfo";
 import {
@@ -11,6 +11,7 @@ import type { Client } from "../../domain/entities/Client";
 import UseClient from "../hooks/UseClient";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import MySwal from "../../infrastructure/di/Sweetalert2";
+import { typeColors } from "../../domain/entities/User";
 
 interface CantCustomerType {
   [tipo: string]: number;
@@ -35,6 +36,7 @@ export default function Customers() {
   const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [refreshClientes, setRefreshClientes] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Client | null>(null);
+  const [viewingCustomer, setViewingCustomer] = useState<Client | null>(null);
 
   const { register, handleSubmit, reset } = useForm<Client>({
     defaultValues: { gasto: 0 },
@@ -75,12 +77,6 @@ export default function Customers() {
     "EMPRESA",
     "CLIENTE_PARTICULAR",
   ];
-
-  const typeColors = {
-    CONSTRUCTORA: "bg-blue-100 text-blue-800",
-    EMPRESA: "bg-green-100 text-green-800",
-    CLIENTE_PARTICULAR: "bg-purple-100 text-purple-800",
-  };
 
   const handleSaveCustomer: SubmitHandler<Client> = async (data) => {
     setShowNewCustomer(false);
@@ -254,7 +250,7 @@ export default function Customers() {
                       <div className="text-sm font-medium text-gray-900">
                         {customer.nombre}
                       </div>
-                      <div className="text-xs text-gray-500">{customer.id}</div>
+                      <div className="text-xs text-gray-500">CL{customer.id}</div>
                     </div>
                   </div>
                   <span
@@ -299,7 +295,7 @@ export default function Customers() {
                       : "N/A"}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="text-blue-600 hover:text-blue-900">
+                    <button onClick={()=> setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-900">
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
@@ -370,7 +366,7 @@ export default function Customers() {
                           {customer.nombre}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {customer.id}
+                          CL{customer.id}
                         </div>
                       </div>
                     </div>
@@ -419,7 +415,7 @@ export default function Customers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button onClick={()=> setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-900">
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
@@ -572,6 +568,184 @@ export default function Customers() {
             </div>
           </div>
         </form>
+      )}
+
+      {/* Customer Detail Viwer Modal */}
+      {viewingCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[95vh] overflow-y-auto">
+            <div className="p-4 md:p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg md:text-xl font-semibold">
+                  Detalle del Cliente - CL{viewingCustomer.id}
+                </h3>
+                <button
+                  onClick={() => setViewingCustomer(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5 md:h-6 md:w-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              {/* Customer Information */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                      <span className="text-blue-600 font-medium text-sm">
+                        {viewingCustomer.nombre
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                    </div>
+                    Información Personal
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-600">Nombre:</span>
+                      <div className="text-gray-900">
+                        {viewingCustomer.nombre}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">
+                        ID Cliente:
+                      </span>
+                      <div className="text-gray-900">CL{viewingCustomer.id}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Tipo:</span>
+                      <span
+                        className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                          typeColors[
+                            viewingCustomer.tipoCliente as keyof typeof typeColors
+                          ]
+                        }`}
+                      >
+                        {viewingCustomer.tipoCliente}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">
+                    Información de Contacto
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Email:
+                        </span>
+                        <div className="text-gray-900">
+                          {viewingCustomer.email}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Teléfono:
+                        </span>
+                        <div className="text-gray-900">
+                          {viewingCustomer.telefono}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Dirección:
+                        </span>
+                        <div className="text-gray-900">
+                          {viewingCustomer.direccion}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Purchase History */}
+              <div className="bg-white border rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  Historial de Compras
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {viewingCustomer.compras.length}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Total de Órdenes
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      ${viewingCustomer.gasto.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Valor Total Comprado
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      $
+                      {viewingCustomer.compras.length > 0
+                        ? Math.round(
+                            viewingCustomer.gasto /
+                              viewingCustomer.compras.length
+                          ).toLocaleString()
+                        : "0"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Promedio por Orden
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-medium text-gray-600">
+                      Última orden:
+                    </span>
+                    <span className="text-gray-900">
+                      {viewingCustomer.compras.at(-1)?.fechaRegistro}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="border-t pt-4">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                  <button
+                    onClick={() => {
+                      setViewingCustomer(null);
+                      editCustomer(viewingCustomer);
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base flex items-center justify-center space-x-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span>Editar Cliente</span>
+                  </button>
+                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base flex items-center justify-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Nueva Venta</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
