@@ -9,7 +9,8 @@ import {
 } from "../../assets/icons/icons";
 import type { Client } from "../../domain/entities/Client";
 import UseClient from "../hooks/UseClient";
-import {  useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import MySwal from "../../infrastructure/di/Sweetalert2";
 
 interface CantCustomerType {
   [tipo: string]: number;
@@ -67,7 +68,7 @@ export default function Customers() {
     };
 
     fetchData();
-  }, [getClients, getTotalClientsByType, refreshClientes]);
+  }, [refreshClientes]);
 
   const customerTypes: Client["tipoCliente"][] = [
     "CONSTRUCTORA",
@@ -88,6 +89,17 @@ export default function Customers() {
       console.log("nuevo cliente", newClient);
       setRefreshClientes(!refreshClientes);
       reset();
+
+      if (newClient) {
+        MySwal.fire({
+          title: "Cliente creado con éxito",
+          icon: "success",
+          draggable: false,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -105,10 +117,21 @@ export default function Customers() {
         ...data,
         id: selectedCustomer.id,
       });
-      console.log("cliente modificado", modifiedClient);
+
       setRefreshClientes(!refreshClientes);
       setSelectedCustomer(null);
       reset();
+
+      if (modifiedClient) {
+        MySwal.fire({
+          title: "Cliente modificado con exito",
+          icon: "success",
+          draggable: false,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
     } catch (error) {
       console.log(error);
     }
@@ -125,10 +148,28 @@ export default function Customers() {
     }
   };
 
-  const deleteCustomer = (customerId: number) => {
-    if (confirm("¿Está seguro de que desea eliminar este cliente?")) {
-      handleDeleteCustomer(customerId);
-    }
+  const deleteCustomer = (customer: Client) => {
+    MySwal.fire({
+      title: `Estas seguro de eliminar al cliente ${customer.nombre}?`,
+      text: "No podras revertir esta acción!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Eliminar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        await handleDeleteCustomer(customer.id);
+        MySwal.fire({
+          title: "Eliminado!",
+          text: "El cliente ha sido eliminado.",
+          icon: "success",
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+    });
   };
 
   const handleCancel = () => {
@@ -268,7 +309,7 @@ export default function Customers() {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      // onClick={() => deleteCustomer(customer.id)}
+                      onClick={() => deleteCustomer(customer)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -388,7 +429,7 @@ export default function Customers() {
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => deleteCustomer(customer.id)}
+                        onClick={() => deleteCustomer(customer)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 className="h-4 w-4" />
