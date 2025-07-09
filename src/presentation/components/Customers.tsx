@@ -1,4 +1,14 @@
-import { Plus, Eye, Edit, Trash2, Phone, Mail, X, Save, MapPin } from "lucide-react";
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Phone,
+  Mail,
+  X,
+  Save,
+  MapPin,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import CardInfo1 from "./CardsInfo";
 import {
@@ -37,6 +47,7 @@ export default function Customers() {
   const [refreshClientes, setRefreshClientes] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Client | null>(null);
   const [viewingCustomer, setViewingCustomer] = useState<Client | null>(null);
+  const [buttonActive, setButtonActive] = useState(false);
 
   const { register, handleSubmit, reset } = useForm<Client>({
     defaultValues: { gasto: 0 },
@@ -49,13 +60,20 @@ export default function Customers() {
         const clients = await getClients();
         const totalConstructora = await getTotalClientsByType("CONSTRUCTORA");
         const totalVidreria = await getTotalClientsByType("EMPRESA");
+        const totalAcomulado = clients.reduce(
+          (suma, client) => suma + client.gasto,
+          0
+        );
 
         if (clients) {
           setCustomers(clients);
           setCantCustomersType({
             constructora: totalConstructora,
             vidreria: totalVidreria,
+            totalAcomulado: totalAcomulado,
           });
+
+          setButtonActive(false);
 
           console.log("Cantidad de clientes por tipo:", {
             constructora: totalConstructora,
@@ -145,6 +163,7 @@ export default function Customers() {
   };
 
   const deleteCustomer = (customer: Client) => {
+    setButtonActive(true);
     MySwal.fire({
       title: `Estas seguro de eliminar al cliente ${customer.nombre}?`,
       text: "No podras revertir esta acción!",
@@ -218,7 +237,11 @@ export default function Customers() {
           icon={VidreriaIcon()}
         />
 
-        <CardInfo1 total={"$85,000"} label="Valor Total" icon={IconDolar()} />
+        <CardInfo1
+          total={cantCustomersType.totalAcomulado?.toLocaleString()}
+          label="Valor Total"
+          icon={IconDolar()}
+        />
       </div>
 
       <div className="bg-white rounded-lg shadow-md">
@@ -250,7 +273,9 @@ export default function Customers() {
                       <div className="text-sm font-medium text-gray-900">
                         {customer.nombre}
                       </div>
-                      <div className="text-xs text-gray-500">CL{customer.id}</div>
+                      <div className="text-xs text-gray-500">
+                        CL{customer.id}
+                      </div>
                     </div>
                   </div>
                   <span
@@ -295,7 +320,10 @@ export default function Customers() {
                       : "N/A"}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button onClick={()=> setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-900">
+                    <button
+                      onClick={() => setViewingCustomer(customer)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
                       <Eye className="h-4 w-4" />
                     </button>
                     <button
@@ -305,7 +333,10 @@ export default function Customers() {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => deleteCustomer(customer)}
+                      disabled={buttonActive}
+                      onClick={() => {
+                        deleteCustomer(customer);
+                      }}
                       className="text-red-600 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -403,7 +434,7 @@ export default function Customers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      ${customer.gasto ? customer.gasto : "0"}
+                      ${customer.gasto ? customer.gasto.toLocaleString() : "0"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -415,7 +446,10 @@ export default function Customers() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button onClick={()=> setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-900">
+                      <button
+                        onClick={() => setViewingCustomer(customer)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
@@ -425,6 +459,7 @@ export default function Customers() {
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
+                        disabled={buttonActive}
                         onClick={() => deleteCustomer(customer)}
                         className="text-red-600 hover:text-red-900"
                       >
@@ -615,7 +650,9 @@ export default function Customers() {
                       <span className="font-medium text-gray-600">
                         ID Cliente:
                       </span>
-                      <div className="text-gray-900">CL{viewingCustomer.id}</div>
+                      <div className="text-gray-900">
+                        CL{viewingCustomer.id}
+                      </div>
                     </div>
                     <div>
                       <span className="font-medium text-gray-600">Tipo:</span>

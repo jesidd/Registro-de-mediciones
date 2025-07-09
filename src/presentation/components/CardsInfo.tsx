@@ -7,7 +7,7 @@ const CardInfo1 = ({total, label, icon }:{total: number| string, label:string, i
             {label}
           </p>
           <p className="text-lg md:text-2xl font-bold text-gray-900">
-            {total}
+            {total ? total : "0"}
           </p>
         </div>
         <div className="p-2 md:p-3 bg-blue-50 rounded-full">
