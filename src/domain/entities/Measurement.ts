@@ -1,5 +1,5 @@
 export interface Measurement{
-  id?: number,
+  id: number,
   descripcion: string,
   hayMasDeUnPiso: true,
   fechaRegistro: string,
