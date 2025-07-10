@@ -8,9 +8,9 @@ export class ClientService implements ClientRepository{
         return response.data;
     }
 
-    async getClientById(id: number): Promise<Client | null> {
-        const response = await AxiosClient.get(`/cliente`, { params: { id } });
-        return response.data.length > 0 ? response.data[0] : null;
+    async getClientById(id: number): Promise<Client> {
+        const response = await AxiosClient.get(`/cliente/${id}`);
+        return response.data;
     }
 
     async createClient(client: Client): Promise<Client> {

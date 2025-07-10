@@ -13,7 +13,7 @@ export default class ClientUseCase {
         return this.clientRepo.getClients();
     }
 
-    async getClientById(id: number): Promise<Client | null> {
+    async getClientById(id: number): Promise<Client> {
         return this.clientRepo.getClientById(id);
     }
     
