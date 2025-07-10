@@ -1,7 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 import Login from "../../presentation/pages/Login";
 import HomeLayaout from "../../presentation/layouts/HomeLayaout";
-import Customers from "../../presentation/components/Customers";
+import Customers from "../../presentation/pages/Customers";
+import Sales from "../../presentation/pages/Sales";
 
 
 const AppRoute = () => {
@@ -10,13 +11,13 @@ const AppRoute = () => {
       <Route path="/" element={<Login />} />
 
       <Route element={<HomeLayaout/>} >
-        <Route path="/dashboard" element={<div>Dashboard</div>} />
-        <Route path="/quotes" element={<div>Cotizaciones</div>} />
-        <Route path="/sales" element={<div>Ventas</div>} />
+        <Route path="/dashboard" element={<div>Proximamente</div>} />
+        <Route path="/quotes" element={<div>Proximamente</div>} />
+        <Route path="/sales" element={<Sales/>} />
         <Route path="/customers" element={<Customers/>} />
-        <Route path="/inventory" element={<div>Inventario</div>} />
-        <Route path="/reports" element={<div>Reportes</div>} />
-        <Route path="/settings" element={<div>Configuración</div>} />
+        <Route path="/inventory" element={<div>Proximamente</div>} />
+        <Route path="/reports" element={<div>Proximamente</div>} />
+        <Route path="/settings" element={<div>Proximamente</div>} />
       </Route>
 
       <Route path="*" element={<div>Page Not Found</div>} />

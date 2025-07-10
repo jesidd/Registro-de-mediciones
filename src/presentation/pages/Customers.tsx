@@ -10,7 +10,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import CardInfo1 from "./CardsInfo";
+import CardInfo1 from "../components/CardsInfo";
 import {
   BuildingIcon,
   GroupPeopleIcon,
