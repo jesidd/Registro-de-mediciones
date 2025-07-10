@@ -4,5 +4,6 @@ export interface Measurement{
   hayMasDeUnPiso: true,
   fechaRegistro: string,
   fechaEntrega: string,
+  estadoVenta: "En Proceso" | "Cancelado" | "Completado",
   clienteId: number,
 }
