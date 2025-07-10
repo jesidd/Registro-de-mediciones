@@ -1,7 +1,7 @@
 import type { Measurement } from "../entities/Measurement";
 import type { MeasurementRepository } from "../repositories/MeasurementRepository";
 
-export class MeasurementUseCase {
+export default class MeasurementUseCase {
 
     private readonly MeasurementRepo: MeasurementRepository;
 
