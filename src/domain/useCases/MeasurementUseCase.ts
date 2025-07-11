@@ -43,6 +43,11 @@ export default class MeasurementUseCase {
         const status_code = await this.MeasurementRepo.deleteMeasurement(Measurement_ID);
         return status_code;
     }
+
+    async getCostoMeasurement(Measurement_ID: number): Promise<number>{
+        const costo = await this.MeasurementRepo.getCostoMesearument(Measurement_ID);
+        return costo;
+    }
 }
 
 

@@ -8,4 +8,5 @@ export interface MeasurementRepository {
   createMeasurement(Measurement: Measurement): Promise<Measurement>;
   updateMeasurement(Measurement: Measurement): Promise<Measurement>;
   deleteMeasurement(Measurement_ID: number): Promise<number>;
+  getCostoMesearument(Measurement_ID: number): Promise<number>;
 }

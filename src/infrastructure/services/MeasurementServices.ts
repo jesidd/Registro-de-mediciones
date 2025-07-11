@@ -38,5 +38,10 @@ export class MeasurementServices implements MeasurementRepository  {
         const response = await AxiosClient.delete(`mediciones/${Measurement_ID}`);
         return response.status;
     }
+
+    async getCostoMesearument(Measurement_ID: number): Promise<number> {
+        const response = await AxiosClient.get(`mediciones/mediciones/${Measurement_ID}/costo`);
+        return response.data;
+    }
 }
 

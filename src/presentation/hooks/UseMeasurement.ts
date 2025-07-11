@@ -31,6 +31,10 @@ export default function UseMeasurement() {
     return MeasurementUseCaseInstance.deleteMeasurement(Measurement_id);
   }, []);
 
+  const getCostoMeasurement = useCallback((Measurement_id: number) =>{
+    return MeasurementUseCaseInstance.getCostoMeasurement(Measurement_id);
+  }, [])
+
   return {
     getMeasurements,
     getMeasurementById,
@@ -38,6 +42,7 @@ export default function UseMeasurement() {
     getAreaTotal,
     createMeasurement,
     updateMeasurement,
-    deleteMeasurement
+    deleteMeasurement,
+    getCostoMeasurement
   };
 }
