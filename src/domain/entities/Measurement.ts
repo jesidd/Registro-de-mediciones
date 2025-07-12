@@ -6,4 +6,5 @@ export interface Measurement{
   fechaEntrega: string,
   estadoVenta: "En Proceso" | "Cancelado" | "Completado",
   clienteId: number,
+  cantidadPisos: number
 }
