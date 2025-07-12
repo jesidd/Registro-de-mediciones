@@ -70,7 +70,7 @@ export default function Sales() {
   }, [refreshPage]);
 
   const handleShowSale = async (Measurement: Measurement) => {
-    const client = await getClientById(Measurement.clienteId);
+    const client = clients && clients[Measurement.clienteId];
     const Artefact = await getArtefactByMeasurementID(Measurement.id);
     setClientViewing(client);
     setArtefactViewing(Artefact);
@@ -657,11 +657,11 @@ export default function Sales() {
                                         </div>
                                       </td>
                                       <td className="px-3 py-3">
-                                        <div className="text-gray-900">$0</div>
+                                        <div className="text-gray-900">${glass.precioM2? glass.precioM2.toLocaleString() : "0"}</div>
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="font-medium text-gray-900">
-                                          $0
+                                          ${glass.precioM2? glass.precioM2.toLocaleString() : "0"}
                                         </div>
                                       </td>
                                     </tr>
@@ -695,12 +695,12 @@ export default function Sales() {
                           Resumen Total
                         </h4>
                         <p className="text-sm text-gray-600">
-                          {ArtefactViewing?.length} artefactos • {}vidrios
+                          {ArtefactViewing?.length ?? 0} artefactos • {ArtefactViewing ? ArtefactViewing.reduce((acc, artifact) => acc + (artifact.vidrios?.length ?? 0), 0) : 0} vidrios
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600">
-                          ${costos[viewingSale.id]}
+                          ${costos[viewingSale.id].toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-600">
                           Total del proyecto
