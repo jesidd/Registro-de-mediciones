@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, removeToken } from '../utils/storage/Token';
 
 const AxiosClient = axios.create({
-    baseURL: 'https://medividrios.onrender.com/api/',
+    baseURL: 'https://medividrios-f7dpb3dcdjc0gdae.canadacentral-01.azurewebsites.net/api/',
     timeout: 20000, // 20 seconds timeout
 });
 
@@ -10,7 +10,7 @@ const AxiosClient = axios.create({
 AxiosClient.interceptors.request.use(
   (config) => {
     const token = getToken();
-    const publicPaths = ["/"]; //rutas pública 
+    const publicPaths = ["/","mediciones"]; //rutas pública 
     const isPublic = publicPaths.some((path) => config.url?.includes(path));
 
     if (token && !isPublic) {
