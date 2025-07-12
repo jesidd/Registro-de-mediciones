@@ -14,7 +14,7 @@ export class ArtefactService implements ArtefactRepository {
         return response.data["totalMetrosCuadrados"];
     }
 
-    async getArtefactByMeasurementID(Measurement_ID: number): Promise<Artefact>{
+    async getArtefactByMeasurementID(Measurement_ID: number): Promise<Artefact[]>{
         const response = await AxiosClient.get(`artefacto/medicion/${Measurement_ID}`);
         return response.data;
     }

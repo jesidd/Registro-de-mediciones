@@ -41,7 +41,7 @@ export class MeasurementServices implements MeasurementRepository  {
 
     async getCostoMesearument(Measurement_ID: number): Promise<number> {
         const response = await AxiosClient.get(`mediciones/mediciones/${Measurement_ID}/costo`);
-        return response.data;
+        return response.data["costoVidrio"];
     }
 }
 
