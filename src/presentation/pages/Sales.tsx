@@ -6,12 +6,15 @@ import UseClient from "../hooks/UseClient";
 import type { Client } from "../../domain/entities/Client";
 import UseArtefact from "../hooks/UseArtefact";
 import type { Artefact } from "../../domain/entities/Artefact";
+import MySwal from "../../infrastructure/di/Sweetalert2";
 
 export default function Sales() {
-  const { getMeasurements, getCostoMeasurement } = UseMeasurement();
+  const { getMeasurements, getCostoMeasurement, deleteMeasurement } =
+    UseMeasurement();
   const { getClientById } = UseClient();
   const { getArtefactByMeasurementID } = UseArtefact();
   const [sales, setSales] = useState<Measurement[]>();
+  const [clients, setClients] = useState<Record<number, Client>>();
   const [ArtefactViewing, setArtefactViewing] = useState<Artefact[]>();
   const [costos, setCostos] = useState<{ [key: number]: number }>({});
   const [totalCostos, setTotalCostos] = useState(0);
@@ -19,6 +22,8 @@ export default function Sales() {
   //const [selectedSale, setSelectedSale] = useState<Measurement | null>(null);
   const [viewingSale, setViewingSale] = useState<Measurement | null>(null);
   const [clientViewing, setClientViewing] = useState<Client>();
+  const [refreshPage, setRefreshPage] = useState(false);
+  const [buttonActive, setButtonActive] = useState(false);
 
   // const glassTypes = [
   //   "Templado",
@@ -31,27 +36,30 @@ export default function Sales() {
   // const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
 
   const statusColors = {
-    "Completado": "bg-green-100 text-green-800",
+    Completado: "bg-green-100 text-green-800",
     "En Proceso": "bg-yellow-100 text-yellow-800",
-    "Pendiente": "bg-red-100 text-red-800",
+    Pendiente: "bg-red-100 text-red-800",
   };
 
   const fetchData = async () => {
     try {
       const allSales = await getMeasurements();
       const Costos: Record<number, number> = {};
+      const Clientes: Record<number, Client> = {};
       let total = 0;
 
       setSales(allSales);
       for (const sale of allSales) {
-        const costo = await getCostoMeasurement(sale.id) || 0;
+        const costo = (await getCostoMeasurement(sale.id)) || 0;
+        const cliente = await getClientById(sale.clienteId);
+        Clientes[sale.clienteId] = cliente;
         Costos[sale.id] = costo;
         total += costo;
       }
 
+      setClients(Clientes);
       setTotalCostos(total);
       setCostos(Costos);
-
     } catch (e) {
       console.log("error sales", e);
     }
@@ -59,7 +67,7 @@ export default function Sales() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshPage]);
 
   const handleShowSale = async (Measurement: Measurement) => {
     const client = await getClientById(Measurement.clienteId);
@@ -77,7 +85,50 @@ export default function Sales() {
   //   value: string
   // ) => {};
 
-  // const removeArtifact = (artifactIndex: number) => {};
+  const handleDeleteMeasurement = async (Measurement: Measurement) => {
+    setButtonActive(true);
+    MySwal.fire({
+      title: `Estas seguro de eliminar la venta V0${Measurement.id}?`,
+      text: "No podras revertir esta acción!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Eliminar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const res = await removeMeasaurement(Measurement.id);
+        if (res) {
+          MySwal.fire({
+            title: "Eliminado!",
+            text: "La venta ha sido eliminado.",
+            icon: "success",
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true,
+          });
+        } else {
+          MySwal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Algo salio mal!",
+          });
+        }
+      }
+    });
+  };
+
+  const removeMeasaurement = async (Measurement_id: number) => {
+    try {
+      const res = await deleteMeasurement(Measurement_id);
+      setRefreshPage((prev) => !prev);
+      setButtonActive(false);
+      console.log("Venta eliminado con éxito");
+      return res;
+    } catch (error) {
+      console.error("Error al eliminar la venta:", error);
+    }
+  };
 
   // const addGlass = (artifactIndex: number) => {};
 
@@ -311,7 +362,8 @@ export default function Sales() {
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      // onClick={() => deleteSale(sale.id)}
+                      disabled={buttonActive}
+                      onClick={() => handleDeleteMeasurement(sale)}
                       className="text-red-600 hover:text-red-900"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -361,7 +413,7 @@ export default function Sales() {
                           V0{sale.id}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {"Client Name"}
+                          {clients && clients[sale.clienteId]?.nombre}
                         </div>
                       </div>
                     </td>
@@ -413,7 +465,8 @@ export default function Sales() {
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          // onClick={() => deleteSale(sale.id)}
+                          disabled={buttonActive}
+                          onClick={() => handleDeleteMeasurement(sale)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -528,113 +581,108 @@ export default function Sales() {
                     Artefactos y Mediciones
                   </h4>
                   <div className="space-y-4">
-                    {ArtefactViewing && ArtefactViewing.map((artifact) => (
-                      <div
-                        key={artifact.id}
-                        className="border rounded-lg p-4 bg-white"
-                      >
-                        <div className="mb-4">
-                          <h5 className="font-medium text-gray-900 text-lg">
-                            {artifact.nombre}
-                          </h5>
-                          <p className="text-gray-600 text-sm">
-                            {}
-                          </p>
-                        </div>
+                    {ArtefactViewing &&
+                      ArtefactViewing.map((artifact) => (
+                        <div
+                          key={artifact.id}
+                          className="border rounded-lg p-4 bg-white"
+                        >
+                          <div className="mb-4">
+                            <h5 className="font-medium text-gray-900 text-lg">
+                              {artifact.nombre}
+                            </h5>
+                            <p className="text-gray-600 text-sm">{}</p>
+                          </div>
 
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Vidrio
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Dimensiones
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Especificaciones
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Cantidad
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Área
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Precio/m²
-                                </th>
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                  Subtotal
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                              {artifact.vidrios.map((glass, glassIndex) => {
-                                const area =
-                                  (glass.ancho_cm * glass.alto_cm) / 10000;
-                                return (
-                                  <tr
-                                    key={glass.id}
-                                    className="hover:bg-gray-50"
-                                  >
-                                    <td className="px-3 py-3">
-                                      <div className="font-medium text-gray-900">
-                                        Vidrio {glassIndex + 1}
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="text-gray-900">
-                                        {glass.ancho_cm} × {glass.alto_cm} cm
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="text-gray-900">
-                                        {glass.tipo} {glass.espesor}mm
-                                      </div>
-                                      <div className="text-gray-500 text-xs">
-                                        {glass.color}
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="text-gray-900">
-                                        {}
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="text-gray-900">
-                                        {area.toFixed(2)} m²
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="text-gray-900">
-                                        $0
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3">
-                                      <div className="font-medium text-gray-900">
-                                        $0
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Vidrio
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Dimensiones
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Especificaciones
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Cantidad
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Área
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Precio/m²
+                                  </th>
+                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                    Subtotal
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200">
+                                {artifact.vidrios.map((glass, glassIndex) => {
+                                  const area =
+                                    (glass.ancho_cm * glass.alto_cm) / 10000;
+                                  return (
+                                    <tr
+                                      key={glass.id}
+                                      className="hover:bg-gray-50"
+                                    >
+                                      <td className="px-3 py-3">
+                                        <div className="font-medium text-gray-900">
+                                          Vidrio {glassIndex + 1}
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="text-gray-900">
+                                          {glass.ancho_cm} × {glass.alto_cm} cm
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="text-gray-900">
+                                          {glass.tipo} {glass.espesor}mm
+                                        </div>
+                                        <div className="text-gray-500 text-xs">
+                                          {glass.color}
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="text-gray-900">{}</div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="text-gray-900">
+                                          {area.toFixed(2)} m²
+                                        </div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="text-gray-900">$0</div>
+                                      </td>
+                                      <td className="px-3 py-3">
+                                        <div className="font-medium text-gray-900">
+                                          $0
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
 
-                        <div className="mt-3 pt-3 border-t">
-                          <div className="text-right">
-                            <span className="text-sm font-medium text-gray-600">
-                              Subtotal Artefacto:{" "}
-                            </span>
-                            <span className="text-lg font-bold text-gray-900">
-                              $0
-                            </span>
+                          <div className="mt-3 pt-3 border-t">
+                            <div className="text-right">
+                              <span className="text-sm font-medium text-gray-600">
+                                Subtotal Artefacto:{" "}
+                              </span>
+                              <span className="text-lg font-bold text-gray-900">
+                                $0
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
 
@@ -647,8 +695,7 @@ export default function Sales() {
                           Resumen Total
                         </h4>
                         <p className="text-sm text-gray-600">
-                          {ArtefactViewing?.length} artefactos •{" "}
-                          {}vidrios
+                          {ArtefactViewing?.length} artefactos • {}vidrios
                         </p>
                       </div>
                       <div className="text-right">
