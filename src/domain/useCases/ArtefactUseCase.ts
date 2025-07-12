@@ -17,7 +17,7 @@ export default class ArtefactUseCase {
         return this.ArtefactRepo.getAreaTotal(Artefact_id);
     }
 
-    async getArtefactByMeasurementID(Measurement_ID: number): Promise<Artefact>{
+    async getArtefactByMeasurementID(Measurement_ID: number): Promise<Artefact[]>{
         return this.ArtefactRepo.getArtefactByMeasurementID(Measurement_ID);
     }
 

@@ -1,4 +1,4 @@
-import { Plus, Eye, Edit, Trash2, Search, Filter, X, Save } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Search, Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Measurement } from "../../domain/entities/Measurement";
 import UseMeasurement from "../hooks/UseMeasurement";
@@ -122,7 +122,7 @@ export default function Sales() {
           </p>
         </div>
         <button
-          onClick={() => setShowNewSale(true)}
+          // onClick={() => setShowNewSale(true)}
           className="bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
