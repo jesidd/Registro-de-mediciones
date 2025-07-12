@@ -1,4 +1,4 @@
-import { Plus, Eye, Edit, Trash2, Search, Filter, X } from "lucide-react";
+import { Plus, Eye, Edit, Trash2, Search, Filter, X, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Measurement } from "../../domain/entities/Measurement";
 import UseMeasurement from "../hooks/UseMeasurement";
@@ -18,27 +18,27 @@ export default function Sales() {
   const [ArtefactViewing, setArtefactViewing] = useState<Artefact[]>();
   const [costos, setCostos] = useState<{ [key: number]: number }>({});
   const [totalCostos, setTotalCostos] = useState(0);
-  //const [showNewSale, setShowNewSale] = useState(false);
+  const [showNewSale, setShowNewSale] = useState(false);
   //const [selectedSale, setSelectedSale] = useState<Measurement | null>(null);
   const [viewingSale, setViewingSale] = useState<Measurement | null>(null);
   const [clientViewing, setClientViewing] = useState<Client>();
   const [refreshPage, setRefreshPage] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
 
-  // const glassTypes = [
-  //   "Templado",
-  //   "Laminado",
-  //   "Flotado",
-  //   "Reflectivo",
-  //   "Doble Vidriado",
-  // ];
-  // const glassColors = ["Transparente", "Bronce", "Gris", "Verde", "Azul"];
-  // const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
+  const glassTypes = [
+    "Templado",
+    "Laminado",
+    "Flotado",
+    "Reflectivo",
+    "Doble Vidriado",
+  ];
+  const glassColors = ["Transparente", "Bronce", "Gris", "Verde", "Azul"];
+  const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
 
   const statusColors = {
-    Completado: "bg-green-100 text-green-800",
+    "Completado": "bg-green-100 text-green-800",
     "En Proceso": "bg-yellow-100 text-yellow-800",
-    Pendiente: "bg-red-100 text-red-800",
+    "Cancelado": "bg-red-100 text-red-800",
   };
 
   const fetchData = async () => {
@@ -173,7 +173,7 @@ export default function Sales() {
           </p>
         </div>
         <button
-          // onClick={() => setShowNewSale(true)}
+          onClick={() => setShowNewSale(true)}
           className="bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
         >
           <Plus className="h-4 w-4 md:h-5 md:w-5" />
@@ -448,7 +448,7 @@ export default function Sales() {
                           ]
                         }`}
                       >
-                        <option value="Pendiente">Pendiente</option>
+                        <option value="Cancelado">Cancelado</option>
                         <option value="En Proceso">En Proceso</option>
                         <option value="Completado">Completado</option>
                       </select>
@@ -657,11 +657,19 @@ export default function Sales() {
                                         </div>
                                       </td>
                                       <td className="px-3 py-3">
-                                        <div className="text-gray-900">${glass.precioM2? glass.precioM2.toLocaleString() : "0"}</div>
+                                        <div className="text-gray-900">
+                                          $
+                                          {glass.precioM2
+                                            ? glass.precioM2.toLocaleString()
+                                            : "0"}
+                                        </div>
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="font-medium text-gray-900">
-                                          ${glass.precioM2? glass.precioM2.toLocaleString() : "0"}
+                                          $
+                                          {glass.precioM2
+                                            ? glass.precioM2.toLocaleString()
+                                            : "0"}
                                         </div>
                                       </td>
                                     </tr>
@@ -695,7 +703,15 @@ export default function Sales() {
                           Resumen Total
                         </h4>
                         <p className="text-sm text-gray-600">
-                          {ArtefactViewing?.length ?? 0} artefactos • {ArtefactViewing ? ArtefactViewing.reduce((acc, artifact) => acc + (artifact.vidrios?.length ?? 0), 0) : 0} vidrios
+                          {ArtefactViewing?.length ?? 0} artefactos •{" "}
+                          {ArtefactViewing
+                            ? ArtefactViewing.reduce(
+                                (acc, artifact) =>
+                                  acc + (artifact.vidrios?.length ?? 0),
+                                0
+                              )
+                            : 0}{" "}
+                          vidrios
                         </p>
                       </div>
                       <div className="text-right">
@@ -707,6 +723,348 @@ export default function Sales() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* New Sale Modal */}
+        {showNewSale && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50">
+            <div className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
+              <div className="p-4 md:p-6 border-b">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg md:text-xl font-semibold">
+                    Nueva Venta
+                  </h3>
+                  <button className="text-gray-400 hover:text-gray-600">
+                    <X className="h-5 w-5 md:h-6 md:w-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+                {/* Customer Information */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3 md:mb-4">
+                      Información del Cliente
+                    </h4>
+                    <div className="space-y-3 md:space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Cliente *
+                        </label>
+                        <input
+                          type="text"
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                          placeholder="Nombre del cliente"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Email
+                        </label>
+                        <input
+                          type="email"
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                          placeholder="email@cliente.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Teléfono
+                        </label>
+                        <input
+                          type="tel"
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                          placeholder="+51 999 123 456"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3 md:mb-4">
+                      Detalles del Proyecto
+                    </h4>
+                    <div className="space-y-3 md:space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Descripción *
+                        </label>
+                        <textarea
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                          rows={3}
+                          placeholder="Descripción del proyecto"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Número de Pisos
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Fecha de Entrega
+                        </label>
+                        <input
+                          type="date"
+                          
+                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Artifacts Section */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 md:mb-4 space-y-2 sm:space-y-0">
+                    <h4 className="font-medium text-gray-900">
+                      Artefactos y Mediciones
+                    </h4>
+                    <button
+                      //onClick={addArtifact}
+                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Agregar Artefacto</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 md:space-y-6">
+                    {newSaleForm.artifacts.map((artifact, artifactIndex) => (
+                      <div
+                        key={artifact.id}
+                        className="border rounded-lg p-3 md:p-4 bg-gray-50"
+                      >
+                        <div className="flex justify-between items-center mb-3 md:mb-4">
+                          <h5 className="font-medium text-gray-900">
+                            Artefacto {artifactIndex + 1}
+                          </h5>
+                          <button
+                            //onClick={() => removeArtifact(artifactIndex)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Nombre del Artefacto
+                            </label>
+                            <input
+                              type="text"
+                              
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                              placeholder="Ej: Ventana Principal"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Descripción
+                            </label>
+                            <input
+                              type="text"
+                              
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                              placeholder="Descripción del artefacto"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 space-y-2 sm:space-y-0">
+                          <h6 className="font-medium text-gray-800">Vidrios</h6>
+                          <button
+                            //onClick={() => addGlass(artifactIndex)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                          >
+                            <Plus className="h-3 w-3" />
+                            <span>Agregar Vidrio</span>
+                          </button>
+                        </div>
+
+                        <div className="space-y-3">
+                          {artifact.glasses.map((glass, glassIndex) => (
+                            <div
+                              key={glass.id}
+                              className="bg-white p-3 rounded border"
+                            >
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-sm font-medium text-gray-700">
+                                  Vidrio {glassIndex + 1}
+                                </span>
+                                <button
+                                 // onClick={() =>
+                                  //  removeGlass(artifactIndex, glassIndex)
+                                 // }
+                                  className="text-red-600 hover:text-red-900"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Ancho (cm)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={glass.width}
+                                    
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Alto (cm)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={glass.height}
+                                    
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Espesor (mm)
+                                  </label>
+                                  <select
+                                    value={glass.thickness}
+                                   
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  >
+                                    {glassThicknesses.map((thickness) => (
+                                      <option key={thickness} value={thickness}>
+                                        {thickness}mm
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Tipo
+                                  </label>
+                                  <select
+                                    value={glass.type}
+                                    
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  >
+                                    {glassTypes.map((type) => (
+                                      <option key={type} value={type}>
+                                        {type}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Color
+                                  </label>
+                                  <select
+                                    value={glass.color}
+                                    onChange={(e) =>
+                                      updateGlass(
+                                        artifactIndex,
+                                        glassIndex,
+                                        "color",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  >
+                                    {glassColors.map((color) => (
+                                      <option key={color} value={color}>
+                                        {color}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Cantidad
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={glass.quantity}
+                                    
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                                    Precio/m²
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    value={glass.price}
+                                    
+                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="mt-2 text-xs text-gray-600">
+                                Área:{" "}
+                                {((glass.width * glass.height) / 10000).toFixed(
+                                  2
+                                )}{" "}
+                                m² | Subtotal: $
+                                {(
+                                  ((glass.width * glass.height) / 10000) *
+                                  glass.price *
+                                  glass.quantity
+                                ).toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Total and Actions */}
+                <div className="border-t pt-4 md:pt-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 space-y-2 sm:space-y-0">
+                    <div className="text-lg font-semibold text-gray-900">
+                      Total Estimado: ${"0"}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button
+                      //onClick={resetForm}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      //onClick={handleSaveSale}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Guardar Venta</span>
+                    </button>
                   </div>
                 </div>
               </div>
