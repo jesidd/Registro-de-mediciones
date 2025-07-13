@@ -6,7 +6,7 @@ export interface User{
 }
 
   export const typeColors = {
-    CONSTRUCTORA: "bg-blue-100 text-blue-800",
-    EMPRESA: "bg-green-100 text-green-800",
-    CLIENTE_PARTICULAR: "bg-purple-100 text-purple-800",
+    "Constructora": "bg-blue-100 text-blue-800",
+    "Empresa": "bg-green-100 text-green-800",
+    "Cliente Particular": "bg-purple-100 text-purple-800",
   };

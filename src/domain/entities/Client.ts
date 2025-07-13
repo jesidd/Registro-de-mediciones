@@ -6,7 +6,7 @@ export interface Client {
   apellido: string;
   email: string;
   telefono: string;
-  tipoCliente: 'CONSTRUCTORA'| 'EMPRESA'|'CLIENTE_PARTICULAR';
+  tipoCliente: 'Constructora'| 'Empresa'|'Cliente Particular';
   direccion: string;
   gasto: number;
   compras: Measurement[];

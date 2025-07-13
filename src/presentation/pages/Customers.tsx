@@ -58,8 +58,8 @@ export default function Customers() {
     const fetchData = async () => {
       try {
         const clients = await getClients();
-        const totalConstructora = await getTotalClientsByType("CONSTRUCTORA");
-        const totalVidreria = await getTotalClientsByType("EMPRESA");
+        const totalConstructora = await getTotalClientsByType("Constructora");
+        const totalVidreria = await getTotalClientsByType("Empresa");
         const totalAcomulado = clients.reduce(
           (suma, client) => suma + client.gasto,
           0
@@ -91,9 +91,9 @@ export default function Customers() {
   }, [refreshClientes]);
 
   const customerTypes: Client["tipoCliente"][] = [
-    "CONSTRUCTORA",
-    "EMPRESA",
-    "CLIENTE_PARTICULAR",
+    "Constructora",
+    "Empresa",
+    "Cliente Particular",
   ];
 
   const handleSaveCustomer: SubmitHandler<Client> = async (data) => {
