@@ -35,7 +35,6 @@ export default function Sales() {
   const [costos, setCostos] = useState<{ [key: number]: number }>({});
   const [totalCostos, setTotalCostos] = useState(0);
   const [showNewSale, setShowNewSale] = useState(false);
-  //const [selectedSale, setSelectedSale] = useState<Measurement | null>(null);
   const [viewingSale, setViewingSale] = useState<Measurement | null>(null);
   const [clientViewing, setClientViewing] = useState<Client>();
   const [refreshPage, setRefreshPage] = useState(false);
@@ -70,6 +69,7 @@ export default function Sales() {
     fields: artefactFields,
     append: appendArtefact,
     remove: removeArtefact,
+    replace,
   } = useFieldArray({
     control,
     name: "Artefacts",
@@ -104,9 +104,14 @@ export default function Sales() {
     } catch (e) {
       console.log("error", e);
     }finally{
-      reset();
-      setClientUsed(undefined);
+      resetForm();
     }
+  };
+
+  const resetForm = () =>{
+    reset();
+    replace([]);
+    setClientUsed(undefined);
   };
 
   useEffect(() => {
@@ -761,7 +766,7 @@ export default function Sales() {
                   </h3>
                   <button
                     className="text-gray-400 hover:text-gray-600"
-                    onClick={() => {setShowNewSale(false); setClientUsed(undefined)}}
+                    onClick={() => {setShowNewSale(false); resetForm()}}
                   >
                     <X className="h-5 w-5 md:h-6 md:w-6" />
                   </button>
@@ -985,8 +990,7 @@ export default function Sales() {
                       type="button"
                       onClick={() => {
                         setShowNewSale(false);
-                        reset();
-                        setClientUsed(undefined);
+                        resetForm()
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
