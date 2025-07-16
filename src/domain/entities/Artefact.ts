@@ -5,7 +5,5 @@ export interface Artefact {
   nombre: string,
   medicionId: number,
   descripcion: string,
-  vidrios: [
-    Glass
-  ]
+  vidrios: Glass[]
 }

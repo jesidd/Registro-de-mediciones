@@ -4,7 +4,15 @@ export interface Glass {
   alto_cm: number;
   espesor: number;
   precioM2: number;
-  color: string;
+  color: "Laminado" | "Templado" | "Flotado" | "Reflectivo" | "Martillado";
   tipo: string;
   artefactoId: number;
 }
+
+export const glassTypes = [
+  "Laminado",
+  "Templado",
+  "Flotado",
+  "Reflectivo",
+  "Martillado",
+];
