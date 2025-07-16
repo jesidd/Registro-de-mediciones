@@ -106,14 +106,15 @@ export default function ArtefactField({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <label htmlFor="espesor" className="block text-xs font-medium text-gray-600 mb-1">
                     Espesor (mm)
                   </label>
                   <select
+                    id="espesor"
                     {...register(
                       `Artefacts.${index}.vidrios.${glassIndex}.espesor`, {valueAsNumber: true}
                     )}
-                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-[#EFEFEF] px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {glassThicknesses.map((thickness) => (
                       <option key={thickness} value={thickness}>
@@ -123,14 +124,15 @@ export default function ArtefactField({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <label htmlFor="tipo" className="block text-xs font-medium text-gray-600 mb-1">
                     Tipo
                   </label>
                   <select
+                    id="tipo"
                     {...register(
                       `Artefacts.${index}.vidrios.${glassIndex}.tipo`
                     )}
-                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full bg-[#EFEFEF] px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {glassTypes.map((type) => (
                       <option key={type} value={type}>
@@ -140,24 +142,25 @@ export default function ArtefactField({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <label htmlFor="color" className="block text-xs font-medium text-gray-600 mb-1">
                     Color
                   </label>
                   <input
+                    id="color"
                     type="text"
                     {...register(
                       `Artefacts.${index}.vidrios.${glassIndex}.color`
                     )}
-                    defaultValue={"Normal"}
                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                  <label htmlFor="precioM" className="block text-xs font-medium text-gray-600 mb-1">
                     Precio/m²
                   </label>
                   <input
+                    id="precioM"
                     type="number"
                     {...register(
                       `Artefacts.${index}.vidrios.${glassIndex}.precioM2`,{required: "El precio es requerido", valueAsNumber:true}
@@ -165,10 +168,6 @@ export default function ArtefactField({
                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
-              </div>
-
-              <div className="mt-2 text-xs text-gray-600">
-                Área: {0} m² | Subtotal: ${0}
               </div>
             </div>
           );

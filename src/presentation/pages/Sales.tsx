@@ -9,19 +9,24 @@ import type { Artefact } from "../../domain/entities/Artefact";
 import MySwal from "../../infrastructure/di/Sweetalert2";
 import { useFieldArray, useForm } from "react-hook-form";
 import type { Glass } from "../../domain/entities/Glass";
+import { glassTypes } from "../../domain/entities/Glass";
 import AddClient from "../components/AddClient";
+import ArtefactField from "../components/sales/ArtefactField";
 
 type formValues = {
   Measurement: Measurement;
   Artefacts: Artefact[];
-  glass: Glass[];
 };
 
 export default function Sales() {
-  const { getMeasurements, getCostoMeasurement, deleteMeasurement } =
-    UseMeasurement();
+  const {
+    getMeasurements,
+    getCostoMeasurement,
+    deleteMeasurement,
+    createMeasurement,
+  } = UseMeasurement();
   const { getClients } = useClient();
-  const { getArtefactByMeasurementID } = UseArtefact();
+  const { getArtefactByMeasurementID, setArtefact } = UseArtefact();
   const [sales, setSales] = useState<Measurement[]>();
   const [clients, setClients] = useState<Client[]>();
   const [clientUsed, setClientUsed] = useState<Client>();
@@ -36,14 +41,6 @@ export default function Sales() {
   const [refreshPage, setRefreshPage] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
 
-  const glassTypes = [
-    "Templado",
-    "Laminado",
-    "Flotado",
-    "Reflectivo",
-    "Doble Vidriado",
-  ];
-  const glassColors = ["Transparente", "Bronce", "Gris", "Verde", "Azul"];
   const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
 
   const statusColors = {
@@ -52,8 +49,20 @@ export default function Sales() {
     Cancelado: "bg-red-100 text-red-800",
   };
 
+  const dateToday = () => {
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0];
+    return formattedDate;
+  };
+
   const { register, control, handleSubmit, reset } = useForm<formValues>({
-    defaultValues: {},
+    defaultValues: {
+      Measurement: {
+        estadoVenta: "En Proceso",
+        fechaRegistro: dateToday(),
+        cantidadPisos: 1,
+      },
+    },
     shouldFocusError: true,
   });
 
@@ -66,98 +75,116 @@ export default function Sales() {
     name: "Artefacts",
   });
 
-  const {
-    fields: glassFields,
-    append: appendGlass,
-    remove: removeGlass,
-  } = useFieldArray({
-    control,
-    name: "glass",
-  });
-
-  const onSubmit = (data: formValues) => {
+  const onSubmit = async (data: formValues) => {
+    setShowNewSale(false);
     console.log(data);
-  };
-
-  const fetchData = async () => {
     try {
-      const allSales = await getMeasurements();
-      const Costos: Record<number, number> = {};
-      const Clientes = await getClients();
-      let total = 0;
+      data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
 
-      setSales(allSales);
-      for (const sale of allSales) {
-        const costo = (await getCostoMeasurement(sale.id)) || 0;
-        Costos[sale.id] = costo;
-        total += costo;
+      const newMeasurement = await createMeasurement(data.Measurement);
+      
+
+      for (const artefact of data.Artefacts) {
+        artefact.medicionId = newMeasurement.id;
+        console.log("este es el artefacto a crear", artefact);
+        await setArtefact(artefact);
       }
-      setClients(Clientes);
-      setTotalCostos(total);
-      setCostos(Costos);
+
+      setRefreshPage((prev) => !prev);
+      if (newMeasurement) {
+        MySwal.fire({
+          title: "Venta creada con éxito",
+          icon: "success",
+          draggable: false,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
     } catch (e) {
-      console.log("error sales", e);
+      console.log("error", e);
+    }finally{
+      reset();
+      setClientUsed(undefined);
     }
   };
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const allSales = await getMeasurements();
+        const Costos: Record<number, number> = {};
+        const Clientes = await getClients();
+        let total = 0;
+
+        setSales(allSales);
+        for (const sale of allSales) {
+          const costo = (await getCostoMeasurement(sale.id)) || 0;
+          Costos[sale.id] = costo;
+          total += costo;
+        }
+        setClients(Clientes);
+        setTotalCostos(total);
+        setCostos(Costos);
+      } catch (e) {
+        console.log("error sales", e);
+      }
+    };
+
     fetchData();
   }, [refreshPage]);
 
   const handleShowSale = async (Measurement: Measurement) => {
-    const client = clients && clients[Measurement.clienteId];
+    const client = clients && clients.find((c) =>(c.id == Measurement.clienteId));
     const Artefact = await getArtefactByMeasurementID(Measurement.id);
     setClientViewing(client);
     setArtefactViewing(Artefact);
     setViewingSale(Measurement);
   };
 
-  // const addArtifact = () => {};
-
-  // const updateArtifact = (
-  //   artifactIndex: number,
-  //   field: keyof Artifact,
-  //   value: string
-  // ) => {};
-
   const handleDeleteMeasurement = async (Measurement: Measurement) => {
     setButtonActive(true);
-    MySwal.fire({
-      title: `Estas seguro de eliminar la venta V0${Measurement.id}?`,
-      text: "No podras revertir esta acción!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Eliminar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        const res = await removeMeasaurement(Measurement.id);
-        if (res) {
-          MySwal.fire({
-            title: "Eliminado!",
-            text: "La venta ha sido eliminado.",
-            icon: "success",
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-          });
-        } else {
-          MySwal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "Algo salio mal!",
-          });
+    try {
+      MySwal.fire({
+        title: `Estas seguro de eliminar la venta V0${Measurement.id}?`,
+        text: "No podras revertir esta acción!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Eliminar",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const res = await removeMeasaurement(Measurement.id);
+          if (res) {
+            MySwal.fire({
+              title: "Eliminado!",
+              text: "La venta ha sido eliminado.",
+              icon: "success",
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true,
+            });
+          } else {
+            MySwal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "Algo salio mal!",
+            });
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      console.log(e);
+    } finally{
+      setButtonActive(false);
+    }
   };
 
   const removeMeasaurement = async (Measurement_id: number) => {
     try {
       const res = await deleteMeasurement(Measurement_id);
       setRefreshPage((prev) => !prev);
-      setButtonActive(false);
       console.log("Venta eliminado con éxito");
       return res;
     } catch (error) {
@@ -165,51 +192,20 @@ export default function Sales() {
     }
   };
 
-  // const addGlass = (artifactIndex: number) => {};
-
-  // const updateGlass = (
-  //   artifactIndex: number,
-  //   glassIndex: number,
-  //   field: keyof GlassItem,
-  //   value: string | number
-  // ) => {};
-
-  // const removeGlass = (artifactIndex: number, glassIndex: number) => {};
-
-  // const calculateTotal = () => {
-  //   return newSaleForm.artifacts.reduce((total, artifact) => {
-  //     return (
-  //       total +
-  //       artifact.glasses.reduce((artifactTotal, glass) => {
-  //         const area = (glass.width * glass.height) / 10000; // Convert cm² to m²
-  //         return artifactTotal + area * glass.price * glass.quantity;
-  //       }, 0)
-  //     );
-  //   }, 0);
-  // };
-
-  // const handleSaveSale = () => {
-  //   setShowNewSale(false);
-  // };
-
-  // const deleteSale = (saleId: string) => {};
-
-  // const updateSaleStatus = (saleId: string, newStatus: string) => {};
-
   const HandledSelectClient = (customer_id: string | number) => {
-    if (customer_id === 'new') {
+    if (customer_id === "new") {
       setShowNewCustomer(true);
     }
 
-    const selectClient= clients?.find((c) => c.id == customer_id);
+    const selectClient = clients?.find((c) => c.id == customer_id);
     setClientUsed(selectClient);
   };
 
   //agrega el nuevo cliente a la lista de clientes ya precargados sin tener q volver a renderizar
-  const HandeldClientAdded = (client:Client)=>{
+  const HandeldClientAdded = (client: Client) => {
     setClientUsed(client);
     setClients((prev) => [...(prev ?? []), client]);
-  }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 pt-16 lg:pt-6">
@@ -455,7 +451,7 @@ export default function Sales() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {sales &&
-                sales.map((sale) => (
+                sales.map((sale) => ( 
                   <tr key={sale.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -463,7 +459,7 @@ export default function Sales() {
                           V0{sale.id}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {clients && clients[sale.clienteId]?.nombre}
+                          {clients && clients.find((c) =>c.id == sale.clienteId)?.nombre}
                         </div>
                       </div>
                     </td>
@@ -488,10 +484,7 @@ export default function Sales() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
-                        value={sale.estadoVenta}
-                        // onChange={(e) =>
-                        //   updateSaleStatus(sale.id, e.target.value)
-                        // }
+                        defaultValue={sale.estadoVenta}
                         className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${
                           statusColors[
                             sale.estadoVenta as keyof typeof statusColors
@@ -646,7 +639,7 @@ export default function Sales() {
 
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">
-                              <thead className="bg-gray-50">
+                              <thead className="bg-gray-100 text-black">
                                 <tr>
                                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Vidrio
@@ -658,16 +651,10 @@ export default function Sales() {
                                     Especificaciones
                                   </th>
                                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Cantidad
-                                  </th>
-                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Área
                                   </th>
                                   <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                     Precio/m²
-                                  </th>
-                                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                    Subtotal
                                   </th>
                                 </tr>
                               </thead>
@@ -692,34 +679,18 @@ export default function Sales() {
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="text-gray-900">
-                                          {glass.tipo} {glass.espesor}mm
+                                          Vidrio {glass.tipo}
                                         </div>
                                         <div className="text-gray-500 text-xs">
-                                          {glass.color}
+                                          {glass.espesor}mm - {glass.color}
                                         </div>
                                       </td>
                                       <td className="px-3 py-3">
-                                        <div className="text-gray-900">{}</div>
+                                        <div className="text-gray-900">{area.toFixed(2)} m²</div>
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="text-gray-900">
-                                          {area.toFixed(2)} m²
-                                        </div>
-                                      </td>
-                                      <td className="px-3 py-3">
-                                        <div className="text-gray-900">
-                                          $
-                                          {glass.precioM2
-                                            ? glass.precioM2.toLocaleString()
-                                            : "0"}
-                                        </div>
-                                      </td>
-                                      <td className="px-3 py-3">
-                                        <div className="font-medium text-gray-900">
-                                          $
-                                          {glass.precioM2
-                                            ? glass.precioM2.toLocaleString()
-                                            : "0"}
+                                          {glass.precioM2}
                                         </div>
                                       </td>
                                     </tr>
@@ -727,17 +698,6 @@ export default function Sales() {
                                 })}
                               </tbody>
                             </table>
-                          </div>
-
-                          <div className="mt-3 pt-3 border-t">
-                            <div className="text-right">
-                              <span className="text-sm font-medium text-gray-600">
-                                Subtotal Artefacto:{" "}
-                              </span>
-                              <span className="text-lg font-bold text-gray-900">
-                                $0
-                              </span>
-                            </div>
                           </div>
                         </div>
                       ))}
@@ -782,7 +742,12 @@ export default function Sales() {
 
         {/* New Client */}
         {showNewCustomer && (
-          <AddClient setShowNewCustomer={setShowNewCustomer} setRefreshClientes={()=>{}} setSelectedCustomer={()=>{}} setClientAdded={HandeldClientAdded}/>
+          <AddClient
+            setShowNewCustomer={setShowNewCustomer}
+            setRefreshClientes={() => {}}
+            setSelectedCustomer={() => {}}
+            setClientAdded={HandeldClientAdded}
+          />
         )}
 
         {/* New Sale Modal */}
@@ -794,14 +759,17 @@ export default function Sales() {
                   <h3 className="text-lg md:text-xl font-semibold">
                     Nueva Venta
                   </h3>
-                  <button className="text-gray-400 hover:text-gray-600" onClick={() => setShowNewSale(false)}>
+                  <button
+                    className="text-gray-400 hover:text-gray-600"
+                    onClick={() => {setShowNewSale(false); setClientUsed(undefined)}}
+                  >
                     <X className="h-5 w-5 md:h-6 md:w-6" />
                   </button>
                 </div>
               </div>
 
               <form
-                onSubmit={() => onSubmit}
+                onSubmit={handleSubmit(onSubmit)}
                 className="p-4 md:p-6 space-y-4 md:space-y-6"
               >
                 {/* Customer Information */}
@@ -817,8 +785,13 @@ export default function Sales() {
                         </label>
                         <select
                           value={clientUsed?.id}
-                          onChange={(e)=> HandledSelectClient(e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
+                          {...register("Measurement.clienteId", {
+                            required: "El cliente es requerido",
+                            onChange: (e) => {
+                              HandledSelectClient(e.target.value);
+                            },
+                          })}
+                          className="w-full bg-[#EFEFEF] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         >
                           <option value="">Seleccionar cliente</option>
                           <option value="new">+ Agregar nuevo cliente</option>
@@ -861,31 +834,49 @@ export default function Sales() {
                     </h4>
                     <div className="space-y-3 md:space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Descripción *
+                        <label
+                          htmlFor="descripcion"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Descripción 
                         </label>
                         <textarea
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           rows={3}
                           placeholder="Descripción del proyecto"
+                          id="descripcion"
+                          {...register("Measurement.descripcion")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                          htmlFor="CantPisos"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                           Número de Pisos
                         </label>
                         <input
                           type="number"
                           min="1"
+                          defaultValue={1}
+                          id="CantPisos"
+                          {...register("Measurement.cantidadPisos", {
+                            required: "Se requiere el numero de pisos",
+                          })}
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                          htmlFor="fecha"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                           Fecha de Entrega
                         </label>
                         <input
                           type="date"
+                          id="fecha"
+                          {...register("Measurement.fechaEntrega")}
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         />
                       </div>
@@ -912,9 +903,8 @@ export default function Sales() {
                               ancho_cm: 0,
                               alto_cm: 0,
                               espesor: glassThicknesses[0],
-                              tipo: glassTypes[0],
-                              color: glassColors[0],
-                              cantidad: 1,
+                              tipo: glassTypes[0] as Glass["tipo"],
+                              color: "",
                               precioM2: 0,
                               artefactoId: 0,
                             },
@@ -941,7 +931,7 @@ export default function Sales() {
                           </h5>
                           <button
                             type="button"
-                            //onClick={() => removeArtifact(artifactIndex)}
+                            onClick={() => removeArtefact(artifactIndex)}
                             className="text-red-600 hover:text-red-900"
                           >
                             <X className="h-4 w-4" />
@@ -950,178 +940,33 @@ export default function Sales() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Nombre del Artefacto
+                            <label
+                              htmlFor="name-artefact"
+                              className="block text-sm font-medium text-gray-700 mb-1"
+                            >
+                              Nombre del Artefacto *
                             </label>
                             <input
                               type="text"
+                              id="name-artefact"
+                              {...register(
+                                `Artefacts.${artifactIndex}.nombre` as const,
+                                {
+                                  required:
+                                    "Se requiere un nombre para el artefacto",
+                                }
+                              )}
                               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                               placeholder="Ej: Ventana Principal"
                             />
                           </div>
-                          {/* <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Descripción
-                            </label>
-                            <input
-                              type="text"
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                              placeholder="Descripción del artefacto"
-                            />
-                          </div> */}
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 space-y-2 sm:space-y-0">
-                          <h6 className="font-medium text-gray-800">Vidrios</h6>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              appendGlass({
-                                id: Date.now(),
-                                ancho_cm: 0,
-                                alto_cm: 0,
-                                espesor: glassThicknesses[0],
-                                tipo: glassTypes[0],
-                                color: glassColors[0],
-                                cantidad: 1,
-                                precioM2: 0,
-                                artefactoId: 0,
-                              })
-                            }
-                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
-                          >
-                            <Plus className="h-3 w-3" />
-                            <span>Agregar Vidrio</span>
-                          </button>
-                        </div>
-
-                        <div className="space-y-3">
-                          {glassFields.map((glass, glassIndex) => (
-                            <div
-                              key={glass.id}
-                              className="bg-white p-3 rounded border"
-                            >
-                              <div className="flex justify-between items-center mb-3">
-                                <span className="text-sm font-medium text-gray-700">
-                                  Vidrio {glassIndex + 1}
-                                </span>
-                                <button
-                                  type="button"
-                                  // onClick={() =>
-                                  //  removeGlass(artifactIndex, glassIndex)
-                                  // }
-                                  className="text-red-600 hover:text-red-900"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-
-                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Ancho (cm)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={glass.ancho_cm}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Alto (cm)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={glass.alto_cm}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Espesor (mm)
-                                  </label>
-                                  <select
-                                    value={glass.espesor}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  >
-                                    {glassThicknesses.map((thickness) => (
-                                      <option key={thickness} value={thickness}>
-                                        {thickness}mm
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Tipo
-                                  </label>
-                                  <select
-                                    value={glass.tipo}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  >
-                                    {glassTypes.map((type) => (
-                                      <option key={type} value={type}>
-                                        {type}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Color
-                                  </label>
-                                  <select
-                                    value={glass.color}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  >
-                                    {glassColors.map((color) => (
-                                      <option key={color} value={color}>
-                                        {color}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                                {/* <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Cantidad
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={glass.cantidad}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
-                                </div> */}
-                                <div>
-                                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                                    Precio/m²
-                                  </label>
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    value={glass.precioM2}
-                                    className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="mt-2 text-xs text-gray-600">
-                                Área:{" "}
-                                {(
-                                  (glass.ancho_cm * glass.alto_cm) /
-                                  10000
-                                ).toFixed(2)}{" "}
-                                m² | Subtotal: $
-                                {(
-                                  ((glass.ancho_cm * glass.alto_cm) / 10000) *
-                                  glass.precioM2 *
-                                  glass.cantidad
-                                ).toFixed(2)}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <ArtefactField
+                          control={control}
+                          index={artifactIndex}
+                          register={register}
+                        />
                       </div>
                     ))}
                   </div>
@@ -1138,7 +983,11 @@ export default function Sales() {
                   <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       type="button"
-                      onClick={() => { setShowNewSale(false); reset(); }}
+                      onClick={() => {
+                        setShowNewSale(false);
+                        reset();
+                        setClientUsed(undefined);
+                      }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
                       Cancelar

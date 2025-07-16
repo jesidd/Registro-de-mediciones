@@ -3,6 +3,7 @@
 @layer base{
     *{
         @apply border-[#e5e7eb];
+        @apply font-sans;
     }
 }
 
