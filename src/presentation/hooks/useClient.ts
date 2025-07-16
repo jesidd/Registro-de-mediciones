@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { clientUseCase } from "../../infrastructure/di/ClientDI";
 import type { Client } from "../../domain/entities/Client";
 
-export default function UseClient() {
+export default function useClient() {
   const getClients = useCallback(() => {
     return clientUseCase.getClients();
   }, []);

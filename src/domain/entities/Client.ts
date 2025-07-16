@@ -6,8 +6,14 @@ export interface Client {
   apellido: string;
   email: string;
   telefono: string;
-  tipoCliente: 'Constructora'| 'Empresa'|'Cliente Particular';
+  tipoCliente: "Constructora" | "Empresa" | "Cliente Particular";
   direccion: string;
   gasto: number;
   compras: Measurement[];
 }
+
+export const ClientTypes: Client["tipoCliente"][] = [
+  "Constructora",
+  "Empresa",
+  "Cliente Particular",
+];

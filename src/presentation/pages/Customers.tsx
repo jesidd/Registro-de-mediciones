@@ -18,7 +18,7 @@ import {
   IconDolar,
 } from "../../assets/icons/icons";
 import type { Client } from "../../domain/entities/Client";
-import UseClient from "../hooks/UseClient";
+import useClient from "../hooks/useClient";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import MySwal from "../../infrastructure/di/Sweetalert2";
 import { typeColors } from "../../domain/entities/User";
@@ -36,7 +36,7 @@ export default function Customers() {
     updateClient,
     deleteClient,
     getTotalClientsByType,
-  } = UseClient();
+  } = useClient();
 
   const [cantCustomersType, setCantCustomersType] = useState<CantCustomerType>({
     constructora: 0,

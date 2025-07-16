@@ -2,19 +2,30 @@ import { Plus, Eye, Edit, Trash2, Search, Filter, X, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Measurement } from "../../domain/entities/Measurement";
 import UseMeasurement from "../hooks/UseMeasurement";
-import UseClient from "../hooks/UseClient";
+import useClient from "../hooks/useClient";
 import type { Client } from "../../domain/entities/Client";
 import UseArtefact from "../hooks/UseArtefact";
 import type { Artefact } from "../../domain/entities/Artefact";
 import MySwal from "../../infrastructure/di/Sweetalert2";
+import { useFieldArray, useForm } from "react-hook-form";
+import type { Glass } from "../../domain/entities/Glass";
+import AddClient from "../components/AddClient";
+
+type formValues = {
+  Measurement: Measurement;
+  Artefacts: Artefact[];
+  glass: Glass[];
+};
 
 export default function Sales() {
   const { getMeasurements, getCostoMeasurement, deleteMeasurement } =
     UseMeasurement();
-  const { getClientById } = UseClient();
+  const { getClients } = useClient();
   const { getArtefactByMeasurementID } = UseArtefact();
   const [sales, setSales] = useState<Measurement[]>();
-  const [clients, setClients] = useState<Record<number, Client>>();
+  const [clients, setClients] = useState<Client[]>();
+  const [clientUsed, setClientUsed] = useState<Client>();
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
   const [ArtefactViewing, setArtefactViewing] = useState<Artefact[]>();
   const [costos, setCostos] = useState<{ [key: number]: number }>({});
   const [totalCostos, setTotalCostos] = useState(0);
@@ -36,27 +47,51 @@ export default function Sales() {
   const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
 
   const statusColors = {
-    "Completado": "bg-green-100 text-green-800",
+    Completado: "bg-green-100 text-green-800",
     "En Proceso": "bg-yellow-100 text-yellow-800",
-    "Cancelado": "bg-red-100 text-red-800",
+    Cancelado: "bg-red-100 text-red-800",
+  };
+
+  const { register, control, handleSubmit, reset } = useForm<formValues>({
+    defaultValues: {},
+    shouldFocusError: true,
+  });
+
+  const {
+    fields: artefactFields,
+    append: appendArtefact,
+    remove: removeArtefact,
+  } = useFieldArray({
+    control,
+    name: "Artefacts",
+  });
+
+  const {
+    fields: glassFields,
+    append: appendGlass,
+    remove: removeGlass,
+  } = useFieldArray({
+    control,
+    name: "glass",
+  });
+
+  const onSubmit = (data: formValues) => {
+    console.log(data);
   };
 
   const fetchData = async () => {
     try {
       const allSales = await getMeasurements();
       const Costos: Record<number, number> = {};
-      const Clientes: Record<number, Client> = {};
+      const Clientes = await getClients();
       let total = 0;
 
       setSales(allSales);
       for (const sale of allSales) {
         const costo = (await getCostoMeasurement(sale.id)) || 0;
-        const cliente = await getClientById(sale.clienteId);
-        Clientes[sale.clienteId] = cliente;
         Costos[sale.id] = costo;
         total += costo;
       }
-
       setClients(Clientes);
       setTotalCostos(total);
       setCostos(Costos);
@@ -160,6 +195,21 @@ export default function Sales() {
   // const deleteSale = (saleId: string) => {};
 
   // const updateSaleStatus = (saleId: string, newStatus: string) => {};
+
+  const HandledSelectClient = (customer_id: string | number) => {
+    if (customer_id === 'new') {
+      setShowNewCustomer(true);
+    }
+
+    const selectClient= clients?.find((c) => c.id == customer_id);
+    setClientUsed(selectClient);
+  };
+
+  //agrega el nuevo cliente a la lista de clientes ya precargados sin tener q volver a renderizar
+  const HandeldClientAdded = (client:Client)=>{
+    setClientUsed(client);
+    setClients((prev) => [...(prev ?? []), client]);
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 pt-16 lg:pt-6">
@@ -730,6 +780,11 @@ export default function Sales() {
           </div>
         )}
 
+        {/* New Client */}
+        {showNewCustomer && (
+          <AddClient setShowNewCustomer={setShowNewCustomer} setRefreshClientes={()=>{}} setSelectedCustomer={()=>{}} setClientAdded={HandeldClientAdded}/>
+        )}
+
         {/* New Sale Modal */}
         {showNewSale && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50">
@@ -739,13 +794,16 @@ export default function Sales() {
                   <h3 className="text-lg md:text-xl font-semibold">
                     Nueva Venta
                   </h3>
-                  <button className="text-gray-400 hover:text-gray-600">
+                  <button className="text-gray-400 hover:text-gray-600" onClick={() => setShowNewSale(false)}>
                     <X className="h-5 w-5 md:h-6 md:w-6" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              <form
+                onSubmit={() => onSubmit}
+                className="p-4 md:p-6 space-y-4 md:space-y-6"
+              >
                 {/* Customer Information */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                   <div>
@@ -757,12 +815,20 @@ export default function Sales() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Cliente *
                         </label>
-                        <input
-                          type="text"
-                          
+                        <select
+                          value={clientUsed?.id}
+                          onChange={(e)=> HandledSelectClient(e.target.value)}
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
-                          placeholder="Nombre del cliente"
-                        />
+                        >
+                          <option value="">Seleccionar cliente</option>
+                          <option value="new">+ Agregar nuevo cliente</option>
+                          {clients &&
+                            clients.map((customer) => (
+                              <option key={customer.id} value={customer.id}>
+                                {customer.nombre} - {customer.tipoCliente}
+                              </option>
+                            ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -770,9 +836,9 @@ export default function Sales() {
                         </label>
                         <input
                           type="email"
-                          
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="email@cliente.com"
+                          defaultValue={clientUsed?.email}
                         />
                       </div>
                       <div>
@@ -781,9 +847,9 @@ export default function Sales() {
                         </label>
                         <input
                           type="tel"
-                          
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="+51 999 123 456"
+                          defaultValue={clientUsed?.telefono}
                         />
                       </div>
                     </div>
@@ -799,7 +865,6 @@ export default function Sales() {
                           Descripción *
                         </label>
                         <textarea
-                          
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           rows={3}
                           placeholder="Descripción del proyecto"
@@ -812,7 +877,6 @@ export default function Sales() {
                         <input
                           type="number"
                           min="1"
-                          
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         />
                       </div>
@@ -822,7 +886,6 @@ export default function Sales() {
                         </label>
                         <input
                           type="date"
-                          
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         />
                       </div>
@@ -837,7 +900,28 @@ export default function Sales() {
                       Artefactos y Mediciones
                     </h4>
                     <button
-                      //onClick={addArtifact}
+                      onClick={() => {
+                        appendArtefact({
+                          id: Date.now(), // or use a better unique id generator
+                          nombre: "",
+                          descripcion: "",
+                          medicionId: 0,
+                          vidrios: [
+                            {
+                              id: Date.now(),
+                              ancho_cm: 0,
+                              alto_cm: 0,
+                              espesor: glassThicknesses[0],
+                              tipo: glassTypes[0],
+                              color: glassColors[0],
+                              cantidad: 1,
+                              precioM2: 0,
+                              artefactoId: 0,
+                            },
+                          ],
+                        });
+                      }}
+                      type="button"
                       className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                       <Plus className="h-4 w-4" />
@@ -846,7 +930,7 @@ export default function Sales() {
                   </div>
 
                   <div className="space-y-4 md:space-y-6">
-                    {newSaleForm.artifacts.map((artifact, artifactIndex) => (
+                    {artefactFields.map((artifact, artifactIndex) => (
                       <div
                         key={artifact.id}
                         className="border rounded-lg p-3 md:p-4 bg-gray-50"
@@ -856,6 +940,7 @@ export default function Sales() {
                             Artefacto {artifactIndex + 1}
                           </h5>
                           <button
+                            type="button"
                             //onClick={() => removeArtifact(artifactIndex)}
                             className="text-red-600 hover:text-red-900"
                           >
@@ -870,28 +955,39 @@ export default function Sales() {
                             </label>
                             <input
                               type="text"
-                              
                               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                               placeholder="Ej: Ventana Principal"
                             />
                           </div>
-                          <div>
+                          {/* <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Descripción
                             </label>
                             <input
                               type="text"
-                              
                               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                               placeholder="Descripción del artefacto"
                             />
-                          </div>
+                          </div> */}
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 space-y-2 sm:space-y-0">
                           <h6 className="font-medium text-gray-800">Vidrios</h6>
                           <button
-                            //onClick={() => addGlass(artifactIndex)}
+                            type="button"
+                            onClick={() =>
+                              appendGlass({
+                                id: Date.now(),
+                                ancho_cm: 0,
+                                alto_cm: 0,
+                                espesor: glassThicknesses[0],
+                                tipo: glassTypes[0],
+                                color: glassColors[0],
+                                cantidad: 1,
+                                precioM2: 0,
+                                artefactoId: 0,
+                              })
+                            }
                             className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
                           >
                             <Plus className="h-3 w-3" />
@@ -900,7 +996,7 @@ export default function Sales() {
                         </div>
 
                         <div className="space-y-3">
-                          {artifact.glasses.map((glass, glassIndex) => (
+                          {glassFields.map((glass, glassIndex) => (
                             <div
                               key={glass.id}
                               className="bg-white p-3 rounded border"
@@ -910,24 +1006,24 @@ export default function Sales() {
                                   Vidrio {glassIndex + 1}
                                 </span>
                                 <button
-                                 // onClick={() =>
+                                  type="button"
+                                  // onClick={() =>
                                   //  removeGlass(artifactIndex, glassIndex)
-                                 // }
+                                  // }
                                   className="text-red-600 hover:text-red-900"
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
                               </div>
 
-                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2 md:gap-3">
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 mb-1">
                                     Ancho (cm)
                                   </label>
                                   <input
                                     type="number"
-                                    value={glass.width}
-                                    
+                                    value={glass.ancho_cm}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   />
                                 </div>
@@ -937,8 +1033,7 @@ export default function Sales() {
                                   </label>
                                   <input
                                     type="number"
-                                    value={glass.height}
-                                    
+                                    value={glass.alto_cm}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   />
                                 </div>
@@ -947,8 +1042,7 @@ export default function Sales() {
                                     Espesor (mm)
                                   </label>
                                   <select
-                                    value={glass.thickness}
-                                   
+                                    value={glass.espesor}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   >
                                     {glassThicknesses.map((thickness) => (
@@ -963,8 +1057,7 @@ export default function Sales() {
                                     Tipo
                                   </label>
                                   <select
-                                    value={glass.type}
-                                    
+                                    value={glass.tipo}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   >
                                     {glassTypes.map((type) => (
@@ -980,14 +1073,6 @@ export default function Sales() {
                                   </label>
                                   <select
                                     value={glass.color}
-                                    onChange={(e) =>
-                                      updateGlass(
-                                        artifactIndex,
-                                        glassIndex,
-                                        "color",
-                                        e.target.value
-                                      )
-                                    }
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   >
                                     {glassColors.map((color) => (
@@ -997,18 +1082,17 @@ export default function Sales() {
                                     ))}
                                   </select>
                                 </div>
-                                <div>
+                                {/* <div>
                                   <label className="block text-xs font-medium text-gray-600 mb-1">
                                     Cantidad
                                   </label>
                                   <input
                                     type="number"
                                     min="1"
-                                    value={glass.quantity}
-                                    
+                                    value={glass.cantidad}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   />
-                                </div>
+                                </div> */}
                                 <div>
                                   <label className="block text-xs font-medium text-gray-600 mb-1">
                                     Precio/m²
@@ -1016,8 +1100,7 @@ export default function Sales() {
                                   <input
                                     type="number"
                                     step="0.01"
-                                    value={glass.price}
-                                    
+                                    value={glass.precioM2}
                                     className="w-full px-2 py-1 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                                   />
                                 </div>
@@ -1025,14 +1108,15 @@ export default function Sales() {
 
                               <div className="mt-2 text-xs text-gray-600">
                                 Área:{" "}
-                                {((glass.width * glass.height) / 10000).toFixed(
-                                  2
-                                )}{" "}
+                                {(
+                                  (glass.ancho_cm * glass.alto_cm) /
+                                  10000
+                                ).toFixed(2)}{" "}
                                 m² | Subtotal: $
                                 {(
-                                  ((glass.width * glass.height) / 10000) *
-                                  glass.price *
-                                  glass.quantity
+                                  ((glass.ancho_cm * glass.alto_cm) / 10000) *
+                                  glass.precioM2 *
+                                  glass.cantidad
                                 ).toFixed(2)}
                               </div>
                             </div>
@@ -1053,13 +1137,14 @@ export default function Sales() {
 
                   <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
-                      //onClick={resetForm}
+                      type="button"
+                      onClick={() => { setShowNewSale(false); reset(); }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
                       Cancelar
                     </button>
                     <button
-                      //onClick={handleSaveSale}
+                      type="submit"
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm md:text-base"
                     >
                       <Save className="h-4 w-4" />
@@ -1067,7 +1152,7 @@ export default function Sales() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         )}
