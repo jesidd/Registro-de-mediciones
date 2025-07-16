@@ -4,8 +4,8 @@ export interface Glass {
   alto_cm: number;
   espesor: number;
   precioM2: number;
-  color: "Laminado" | "Templado" | "Flotado" | "Reflectivo" | "Martillado";
-  tipo: string;
+  color: string;
+  tipo: "Laminado" | "Templado" | "Flotado" | "Reflectivo" | "Martillado";
   artefactoId: number;
 }
 
