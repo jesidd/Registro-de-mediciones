@@ -27,7 +27,8 @@ export default function Sales() {
     updateMeasurement,
   } = UseMeasurement();
   const { getClients } = useClient();
-  const { getArtefactByMeasurementID, setArtefact, updateArtefact } = UseArtefact();
+  const { getArtefactByMeasurementID, setArtefact, updateArtefact } =
+    UseArtefact();
   const [sales, setSales] = useState<Measurement[]>();
   const [clients, setClients] = useState<Client[]>();
   const [clientUsed, setClientUsed] = useState<Client>();
@@ -79,18 +80,17 @@ export default function Sales() {
     name: "Artefacts",
   });
 
-  const onSubmit = async (data: formValues) => { // agrega una venta
+  const onSubmit = async (data: formValues) => {
+    // agrega una venta
     setShowNewSale(false);
     console.log(data);
     try {
       data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
 
       const newMeasurement = await createMeasurement(data.Measurement);
-      
 
       for (const artefact of data.Artefacts) {
         artefact.medicionId = newMeasurement.id;
-        console.log("este es el artefacto a crear", artefact);
         await setArtefact(artefact);
       }
 
@@ -106,18 +106,23 @@ export default function Sales() {
         });
       }
     } catch (e) {
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
       console.log("error", e);
-    }finally{
+    } finally {
       resetForm();
     }
   };
 
-  const resetForm = () =>{
+  const resetForm = () => {
     reset();
     replace([]);
     setClientUsed(undefined);
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,42 +142,50 @@ export default function Sales() {
         setTotalCostos(total);
         setCostos(Costos);
       } catch (e) {
-        console.log("error sales", e);
+        MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
+        console.log("Ocurrio un error", e);
       }
     };
 
     fetchData();
   }, [refreshPage]);
 
-
-  const onSubmitUpdate = async (data: formValues) => { // agrega una venta
+  const onSubmitUpdate = async (data: formValues) => {
+    // agrega una venta
     setShowEditSale(undefined);
     console.log(data);
     try {
       data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
+      let measuremente_id = 0;
 
-      const measuremente_id = showEditSale?.id ?? 0
+      if (showEditSale) {
+        measuremente_id = showEditSale?.id;
+      } else {
+        throw new Error("No se encontro el Measurement ID");
+      }
 
-      data.Measurement.id = measuremente_id // se agrega el id del measurement a editar a los datos del form
-      
+      data.Measurement.id = measuremente_id; // se agrega el id del measurement a editar a los datos del form
+
       const newMeasurement = await updateMeasurement(data.Measurement);
-      
 
-      data.Artefacts.forEach (async (artefact, index)=>{
+      data.Artefacts.forEach(async (artefact, index) => {
         artefact.medicionId = newMeasurement.id;
-        console.log("este es el artefacto a modificar", artefact);
-        if(artefactEdit && (index < artefactEdit?.length)){
+        if (artefactEdit && index < artefactEdit?.length) {
           await updateArtefact(artefact);
-        }else{
+        } else {
           await setArtefact(artefact);
         }
-        
       });
 
       setRefreshPage((prev) => !prev);
       if (newMeasurement) {
         MySwal.fire({
-          title: "Venta creada con éxito",
+          title: "Venta Modificada con éxito",
           icon: "success",
           draggable: false,
           showConfirmButton: false,
@@ -181,21 +194,26 @@ export default function Sales() {
         });
       }
     } catch (e) {
-      console.log("error", e);
-    }finally{
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
+      console.log("un error ocurrio al modificar", e);
+    } finally {
       resetForm();
     }
   };
 
-
   const handleShowSale = async (Measurement: Measurement) => {
-    const client = clients && clients.find((c) =>(c.id == Measurement.clienteId));
+    const client =
+      clients && clients.find((c) => c.id == Measurement.clienteId);
     const Artefact = await HandleGetArtfact(Measurement.id);
     setClientViewing(client);
     setArtefactViewing(Artefact);
     setViewingSale(Measurement);
   };
-
 
   const handleDeleteMeasurement = async (Measurement: Measurement) => {
     setButtonActive(true);
@@ -231,11 +249,10 @@ export default function Sales() {
       });
     } catch (e) {
       console.log(e);
-    } finally{
+    } finally {
       setButtonActive(false);
     }
   };
-
 
   const removeMeasaurement = async (Measurement_id: number) => {
     try {
@@ -247,7 +264,6 @@ export default function Sales() {
       console.error("Error al eliminar la venta:", error);
     }
   };
-  
 
   const HandledSelectClient = (customer_id: string | number) => {
     if (customer_id === "new") {
@@ -258,14 +274,16 @@ export default function Sales() {
     setClientUsed(selectClient);
   };
 
-
-  const HandleUpdateStateSale = async (Measurement: Measurement, stateSale: Measurement["estadoVenta"]) =>{
-    setOnchange(prev => !prev);
-    try{
+  const HandleUpdateStateSale = async (
+    Measurement: Measurement,
+    stateSale: Measurement["estadoVenta"]
+  ) => {
+    setOnchange((prev) => !prev);
+    try {
       Measurement.estadoVenta = stateSale;
       await updateMeasurement(Measurement);
-    }catch(e){
-      console.log("Se presento un error: ",e);
+    } catch (e) {
+      console.log("Se presento un error: ", e);
     }
   };
 
@@ -275,36 +293,33 @@ export default function Sales() {
     setClients((prev) => [...(prev ?? []), client]);
   };
 
-  const HandleGetArtfact = async (Measurement_id: number)=>{
-    try{
+  const HandleGetArtfact = async (Measurement_id: number) => {
+    try {
       return await getArtefactByMeasurementID(Measurement_id);
-    }catch(e){
+    } catch (e) {
       console.log("ocurrio un error", e);
     }
-  };  
+  };
 
+  const HandleShowEditSale = async (Measurement: Measurement) => {
+    try {
+      setClientUsed(clients?.find((c) => c.id == Measurement.clienteId));
 
-  const HandleShowEditSale = async (Measurement: Measurement) =>{
-    try{
-      setClientUsed(clients?.find((c)=> c.id == Measurement.clienteId));
-
-      const artefactToEdit = await getArtefactByMeasurementID(Measurement.id)
+      const artefactToEdit = await getArtefactByMeasurementID(Measurement.id);
       replace(artefactToEdit);
-      setArtefactEdit(artefactToEdit)
-
-    }catch(e){
-      console.log("error",e);
+      setArtefactEdit(artefactToEdit);
+    } catch (e) {
+      console.log("error", e);
     }
-    
+
     setShowEditSale(Measurement);
-  }
+  };
 
-
-  const HandleCloseFormSale= () =>{
-    setShowNewSale(false); 
+  const HandleCloseFormSale = () => {
+    setShowNewSale(false);
     resetForm();
     setShowEditSale(undefined);
-  }
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 pt-16 lg:pt-6">
@@ -486,7 +501,7 @@ export default function Sales() {
                 <div className="text-sm text-gray-900">{sale.descripcion}</div>
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
-                    {sale.cantidadPisos|| 0} pisos • {} artefactos
+                    {sale.cantidadPisos || 0} pisos • {} artefactos
                   </div>
                   <div className="font-medium text-gray-900">
                     ${costos[sale.id]?.toLocaleString()}
@@ -503,7 +518,10 @@ export default function Sales() {
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button onClick={()=> HandleShowEditSale(sale)} className="text-indigo-600 hover:text-indigo-900">
+                    <button
+                      onClick={() => HandleShowEditSale(sale)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                    >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
@@ -550,7 +568,7 @@ export default function Sales() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {sales &&
-                sales.map((sale) => ( 
+                sales.map((sale) => (
                   <tr key={sale.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -558,7 +576,8 @@ export default function Sales() {
                           V0{sale.id}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {clients && clients.find((c) =>c.id == sale.clienteId)?.nombre}
+                          {clients &&
+                            clients.find((c) => c.id == sale.clienteId)?.nombre}
                         </div>
                       </div>
                     </td>
@@ -584,14 +603,22 @@ export default function Sales() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         defaultValue={sale.estadoVenta}
-                        onChange={(e) =>(HandleUpdateStateSale(sale, e.target.value as Measurement["estadoVenta"]))}
+                        onChange={(e) =>
+                          HandleUpdateStateSale(
+                            sale,
+                            e.target.value as Measurement["estadoVenta"]
+                          )
+                        }
                         className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${
                           statusColors[
                             sale.estadoVenta as keyof typeof statusColors
-                          ] 
-                        } ${onChange &&  statusColors[
+                          ]
+                        } ${
+                          onChange &&
+                          statusColors[
                             sale.estadoVenta as keyof typeof statusColors
-                          ] }`}
+                          ]
+                        }`}
                       >
                         <option value="Cancelado">Cancelado</option>
                         <option value="En Proceso">En Proceso</option>
@@ -606,7 +633,10 @@ export default function Sales() {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button onClick={()=> HandleShowEditSale(sale)} className="text-indigo-600 hover:text-indigo-900">
+                        <button
+                          onClick={() => HandleShowEditSale(sale)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
@@ -788,7 +818,9 @@ export default function Sales() {
                                         </div>
                                       </td>
                                       <td className="px-3 py-3">
-                                        <div className="text-gray-900">{area.toFixed(2)} m²</div>
+                                        <div className="text-gray-900">
+                                          {area.toFixed(2)} m²
+                                        </div>
                                       </td>
                                       <td className="px-3 py-3">
                                         <div className="text-gray-900">
@@ -863,7 +895,9 @@ export default function Sales() {
                   </h3>
                   <button
                     className="text-gray-400 hover:text-gray-600"
-                    onClick={() => { HandleCloseFormSale()}}
+                    onClick={() => {
+                      HandleCloseFormSale();
+                    }}
                   >
                     <X className="h-5 w-5 md:h-6 md:w-6" />
                   </button>
@@ -913,8 +947,10 @@ export default function Sales() {
                           type="email"
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="email@cliente.com"
-                          defaultValue={showNewSale ? clientUsed?.email : undefined}
-                          onChange={()=>{}}
+                          defaultValue={
+                            showNewSale ? clientUsed?.email : undefined
+                          }
+                          onChange={() => {}}
                           value={showEditSale && clientUsed?.email}
                         />
                       </div>
@@ -926,8 +962,10 @@ export default function Sales() {
                           type="tel"
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="+51 999 123 456"
-                          defaultValue={showNewSale ? clientUsed?.telefono : undefined}
-                          onChange={()=>{}}
+                          defaultValue={
+                            showNewSale ? clientUsed?.telefono : undefined
+                          }
+                          onChange={() => {}}
                           value={showEditSale && clientUsed?.telefono}
                         />
                       </div>
@@ -944,7 +982,7 @@ export default function Sales() {
                           htmlFor="descripcion"
                           className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                          Descripción 
+                          Descripción
                         </label>
                         <textarea
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
@@ -1091,7 +1129,8 @@ export default function Sales() {
                   <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       type="button"
-                      onClick={() => {HandleCloseFormSale()
+                      onClick={() => {
+                        HandleCloseFormSale();
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
