@@ -500,7 +500,7 @@ export default function Sales() {
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button className="text-indigo-600 hover:text-indigo-900">
+                    <button onClick={()=> HandleShowEditSale(sale)} className="text-indigo-600 hover:text-indigo-900">
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
