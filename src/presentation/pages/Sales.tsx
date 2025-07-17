@@ -150,8 +150,11 @@ export default function Sales() {
     console.log(data);
     try {
       data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
-      data.Measurement.id = data.Artefacts[0].medicionId // agrega la medicion id a medicion ya q el form no lo trae
 
+      const measuremente_id = showEditSale?.id ?? 0
+
+      data.Measurement.id = measuremente_id // se agrega el id del measurement a editar a los datos del form
+      
       const newMeasurement = await updateMeasurement(data.Measurement);
       
 
@@ -483,7 +486,7 @@ export default function Sales() {
                 <div className="text-sm text-gray-900">{sale.descripcion}</div>
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
-                    {sale.cantidadPisos} pisos • {} artefactos
+                    {sale.cantidadPisos|| 0} pisos • {} artefactos
                   </div>
                   <div className="font-medium text-gray-900">
                     ${costos[sale.id]?.toLocaleString()}
