@@ -509,7 +509,10 @@ export default function Sales() {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-medium text-gray-900">V0{sale.id}</div>
-                    <div className="text-sm text-gray-500">{}</div>
+                    <div className="text-sm text-gray-500">
+                      {clients &&
+                        clients.find((c) => c.id == sale.clienteId)?.nombre}
+                    </div>
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${
