@@ -209,13 +209,12 @@ export default function Sales() {
   };
 
   const HandleUpdateStateSale = async (Measurement: Measurement, stateSale: Measurement["estadoVenta"]) =>{
+    setOnchange(prev => !prev);
     try{
       Measurement.estadoVenta = stateSale;
       await updateMeasurement(Measurement);
     }catch(e){
       console.log("Se presento un error: ",e);
-    }finally{
-      setOnchange(prev => !prev);
     }
   };
 
