@@ -27,11 +27,13 @@ export default function Sales() {
     updateMeasurement,
   } = UseMeasurement();
   const { getClients } = useClient();
-  const { getArtefactByMeasurementID, setArtefact } = UseArtefact();
+  const { getArtefactByMeasurementID, setArtefact, updateArtefact } = UseArtefact();
   const [sales, setSales] = useState<Measurement[]>();
   const [clients, setClients] = useState<Client[]>();
   const [clientUsed, setClientUsed] = useState<Client>();
   const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [showEditSale, setShowEditSale] = useState<Measurement>();
+  const [artefactEdit, setArtefactEdit] = useState<Artefact[]>();
   const [ArtefactViewing, setArtefactViewing] = useState<Artefact[]>();
   const [costos, setCostos] = useState<{ [key: number]: number }>({});
   const [totalCostos, setTotalCostos] = useState(0);
@@ -77,7 +79,7 @@ export default function Sales() {
     name: "Artefacts",
   });
 
-  const onSubmit = async (data: formValues) => {
+  const onSubmit = async (data: formValues) => { // agrega una venta
     setShowNewSale(false);
     console.log(data);
     try {
@@ -116,6 +118,7 @@ export default function Sales() {
     setClientUsed(undefined);
   };
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -141,13 +144,55 @@ export default function Sales() {
     fetchData();
   }, [refreshPage]);
 
+
+  const onSubmitUpdate = async (data: formValues) => { // agrega una venta
+    setShowEditSale(undefined);
+    console.log(data);
+    try {
+      data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
+      data.Measurement.id = data.Artefacts[0].medicionId // agrega la medicion id a medicion ya q el form no lo trae
+
+      const newMeasurement = await updateMeasurement(data.Measurement);
+      
+
+      data.Artefacts.forEach (async (artefact, index)=>{
+        artefact.medicionId = newMeasurement.id;
+        console.log("este es el artefacto a modificar", artefact);
+        if(artefactEdit && (index < artefactEdit?.length)){
+          await updateArtefact(artefact);
+        }else{
+          await setArtefact(artefact);
+        }
+        
+      });
+
+      setRefreshPage((prev) => !prev);
+      if (newMeasurement) {
+        MySwal.fire({
+          title: "Venta creada con éxito",
+          icon: "success",
+          draggable: false,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+    } catch (e) {
+      console.log("error", e);
+    }finally{
+      resetForm();
+    }
+  };
+
+
   const handleShowSale = async (Measurement: Measurement) => {
     const client = clients && clients.find((c) =>(c.id == Measurement.clienteId));
-    const Artefact = await getArtefactByMeasurementID(Measurement.id);
+    const Artefact = await HandleGetArtfact(Measurement.id);
     setClientViewing(client);
     setArtefactViewing(Artefact);
     setViewingSale(Measurement);
   };
+
 
   const handleDeleteMeasurement = async (Measurement: Measurement) => {
     setButtonActive(true);
@@ -188,6 +233,7 @@ export default function Sales() {
     }
   };
 
+
   const removeMeasaurement = async (Measurement_id: number) => {
     try {
       const res = await deleteMeasurement(Measurement_id);
@@ -198,6 +244,7 @@ export default function Sales() {
       console.error("Error al eliminar la venta:", error);
     }
   };
+  
 
   const HandledSelectClient = (customer_id: string | number) => {
     if (customer_id === "new") {
@@ -207,6 +254,7 @@ export default function Sales() {
     const selectClient = clients?.find((c) => c.id == customer_id);
     setClientUsed(selectClient);
   };
+
 
   const HandleUpdateStateSale = async (Measurement: Measurement, stateSale: Measurement["estadoVenta"]) =>{
     setOnchange(prev => !prev);
@@ -223,6 +271,37 @@ export default function Sales() {
     setClientUsed(client);
     setClients((prev) => [...(prev ?? []), client]);
   };
+
+  const HandleGetArtfact = async (Measurement_id: number)=>{
+    try{
+      return await getArtefactByMeasurementID(Measurement_id);
+    }catch(e){
+      console.log("ocurrio un error", e);
+    }
+  };  
+
+
+  const HandleShowEditSale = async (Measurement: Measurement) =>{
+    try{
+      setClientUsed(clients?.find((c)=> c.id == Measurement.clienteId));
+
+      const artefactToEdit = await getArtefactByMeasurementID(Measurement.id)
+      replace(artefactToEdit);
+      setArtefactEdit(artefactToEdit)
+
+    }catch(e){
+      console.log("error",e);
+    }
+    
+    setShowEditSale(Measurement);
+  }
+
+
+  const HandleCloseFormSale= () =>{
+    setShowNewSale(false); 
+    resetForm();
+    setShowEditSale(undefined);
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6 pt-16 lg:pt-6">
@@ -404,7 +483,7 @@ export default function Sales() {
                 <div className="text-sm text-gray-900">{sale.descripcion}</div>
                 <div className="flex justify-between items-center">
                   <div className="text-sm text-gray-600">
-                    {sale.hayMasDeUnPiso} pisos • {"1"} artefactos
+                    {sale.cantidadPisos} pisos • {} artefactos
                   </div>
                   <div className="font-medium text-gray-900">
                     ${costos[sale.id]?.toLocaleString()}
@@ -524,7 +603,7 @@ export default function Sales() {
                         >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button className="text-indigo-600 hover:text-indigo-900">
+                        <button onClick={()=> HandleShowEditSale(sale)} className="text-indigo-600 hover:text-indigo-900">
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
@@ -770,18 +849,18 @@ export default function Sales() {
           />
         )}
 
-        {/* New Sale Modal */}
-        {showNewSale && (
+        {/* New/edit Sale Modal */}
+        {(showNewSale || showEditSale) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 md:p-4 z-50">
             <div className="bg-white rounded-lg w-full max-w-6xl max-h-[95vh] overflow-y-auto">
               <div className="p-4 md:p-6 border-b">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg md:text-xl font-semibold">
-                    Nueva Venta
+                    {showNewSale ? "Nueva Venta" : "Editar Venta"}
                   </h3>
                   <button
                     className="text-gray-400 hover:text-gray-600"
-                    onClick={() => {setShowNewSale(false); resetForm()}}
+                    onClick={() => { HandleCloseFormSale()}}
                   >
                     <X className="h-5 w-5 md:h-6 md:w-6" />
                   </button>
@@ -789,7 +868,7 @@ export default function Sales() {
               </div>
 
               <form
-                onSubmit={handleSubmit(onSubmit)}
+                onSubmit={handleSubmit(showNewSale ? onSubmit : onSubmitUpdate)}
                 className="p-4 md:p-6 space-y-4 md:space-y-6"
               >
                 {/* Customer Information */}
@@ -831,7 +910,9 @@ export default function Sales() {
                           type="email"
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="email@cliente.com"
-                          defaultValue={clientUsed?.email}
+                          defaultValue={showNewSale ? clientUsed?.email : undefined}
+                          onChange={()=>{}}
+                          value={showEditSale && clientUsed?.email}
                         />
                       </div>
                       <div>
@@ -842,7 +923,9 @@ export default function Sales() {
                           type="tel"
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                           placeholder="+51 999 123 456"
-                          defaultValue={clientUsed?.telefono}
+                          defaultValue={showNewSale ? clientUsed?.telefono : undefined}
+                          onChange={()=>{}}
+                          value={showEditSale && clientUsed?.telefono}
                         />
                       </div>
                     </div>
@@ -866,6 +949,7 @@ export default function Sales() {
                           placeholder="Descripción del proyecto"
                           id="descripcion"
                           {...register("Measurement.descripcion")}
+                          defaultValue={showEditSale?.descripcion}
                         />
                       </div>
                       <div>
@@ -878,7 +962,7 @@ export default function Sales() {
                         <input
                           type="number"
                           min="1"
-                          defaultValue={1}
+                          defaultValue={showEditSale?.cantidadPisos || 1}
                           id="CantPisos"
                           {...register("Measurement.cantidadPisos", {
                             required: "Se requiere el numero de pisos",
@@ -896,6 +980,7 @@ export default function Sales() {
                         <input
                           type="date"
                           id="fecha"
+                          defaultValue={showEditSale?.fechaEntrega}
                           {...register("Measurement.fechaEntrega")}
                           className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base"
                         />
@@ -1003,9 +1088,7 @@ export default function Sales() {
                   <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowNewSale(false);
-                        resetForm()
+                      onClick={() => {HandleCloseFormSale()
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm md:text-base"
                     >
