@@ -83,7 +83,6 @@ export default function Sales() {
   const onSubmit = async (data: formValues) => {
     // agrega una venta
     setShowNewSale(false);
-    console.log(data);
     try {
       data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
 
@@ -112,7 +111,7 @@ export default function Sales() {
         text: "Algo salio mal!",
         footer: '<a href="#">Si este error persiste reportalo</a>',
       });
-      console.log("error", e);
+      console.log("error al crear una venta", e);
     } finally {
       resetForm();
     }
@@ -143,12 +142,12 @@ export default function Sales() {
         setCostos(Costos);
       } catch (e) {
         MySwal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: "Algo salio mal!",
-        footer: '<a href="#">Si este error persiste reportalo</a>',
-      });
-        console.log("Ocurrio un error", e);
+          icon: "error",
+          title: "Oops...",
+          text: "Algo salio mal!",
+          footer: '<a href="#">Si este error persiste reportalo</a>',
+        });
+        console.log("Ocurrio un error al iniciar la vista", e);
       }
     };
 
@@ -156,9 +155,8 @@ export default function Sales() {
   }, [refreshPage]);
 
   const onSubmitUpdate = async (data: formValues) => {
-    // agrega una venta
+    // modifica una venta
     setShowEditSale(undefined);
-    console.log(data);
     try {
       data.Measurement.clienteId = Number(clientUsed?.id); // convierte el el id de string a number
       let measuremente_id = 0;
@@ -248,7 +246,13 @@ export default function Sales() {
         }
       });
     } catch (e) {
-      console.log(e);
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
+      console.log("Ocurrio un error al eliminar", e);
     } finally {
       setButtonActive(false);
     }
@@ -258,9 +262,14 @@ export default function Sales() {
     try {
       const res = await deleteMeasurement(Measurement_id);
       setRefreshPage((prev) => !prev);
-      console.log("Venta eliminado con éxito");
       return res;
     } catch (error) {
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
       console.error("Error al eliminar la venta:", error);
     }
   };
@@ -283,7 +292,13 @@ export default function Sales() {
       Measurement.estadoVenta = stateSale;
       await updateMeasurement(Measurement);
     } catch (e) {
-      console.log("Se presento un error: ", e);
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
+      console.log("Se presento un error al actualizar el estado de venta: ", e);
     }
   };
 
@@ -302,6 +317,7 @@ export default function Sales() {
   };
 
   const HandleShowEditSale = async (Measurement: Measurement) => {
+    setButtonActive(true);
     try {
       setClientUsed(clients?.find((c) => c.id == Measurement.clienteId));
 
@@ -309,10 +325,17 @@ export default function Sales() {
       replace(artefactToEdit);
       setArtefactEdit(artefactToEdit);
     } catch (e) {
-      console.log("error", e);
+      MySwal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Algo salio mal!",
+        footer: '<a href="#">Si este error persiste reportalo</a>',
+      });
+      console.log("Se presento un error al intentar modificar una venta", e);
+    } finally {
+      setShowEditSale(Measurement);
+      setButtonActive(false);
     }
-
-    setShowEditSale(Measurement);
   };
 
   const HandleCloseFormSale = () => {
@@ -634,6 +657,7 @@ export default function Sales() {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
+                          disabled={buttonActive}
                           onClick={() => HandleShowEditSale(sale)}
                           className="text-indigo-600 hover:text-indigo-900"
                         >
@@ -891,7 +915,9 @@ export default function Sales() {
               <div className="p-4 md:p-6 border-b">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg md:text-xl font-semibold">
-                    {showNewSale ? "Nueva Venta" : "Editar Venta"}
+                    {showNewSale
+                      ? "Nueva Venta"
+                      : `Editar Venta - V0${showEditSale?.id}`}
                   </h3>
                   <button
                     className="text-gray-400 hover:text-gray-600"
@@ -1120,11 +1146,11 @@ export default function Sales() {
 
                 {/* Total and Actions */}
                 <div className="border-t pt-4 md:pt-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 space-y-2 sm:space-y-0">
+                  {/* <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 md:mb-6 space-y-2 sm:space-y-0">
                     <div className="text-lg font-semibold text-gray-900">
                       Total Estimado: ${"0"}
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                     <button
