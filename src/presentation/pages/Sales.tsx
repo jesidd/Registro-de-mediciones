@@ -526,9 +526,6 @@ export default function Sales() {
                 </div>
                 <div className="text-sm text-gray-900">{sale.descripcion}</div>
                 <div className="flex justify-between items-center">
-                  <div className="text-sm text-gray-600">
-                    {sale.cantidadPisos || 0} pisos • {} artefactos
-                  </div>
                   <div className="font-medium text-gray-900">
                     ${costos[sale.id]?.toLocaleString()}
                   </div>
