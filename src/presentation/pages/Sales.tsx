@@ -24,6 +24,7 @@ export default function Sales() {
     getCostoMeasurement,
     deleteMeasurement,
     createMeasurement,
+    updateMeasurement,
   } = UseMeasurement();
   const { getClients } = useClient();
   const { getArtefactByMeasurementID, setArtefact } = UseArtefact();
@@ -39,6 +40,7 @@ export default function Sales() {
   const [clientViewing, setClientViewing] = useState<Client>();
   const [refreshPage, setRefreshPage] = useState(false);
   const [buttonActive, setButtonActive] = useState(false);
+  const [onChange, setOnchange] = useState(false);
 
   const glassThicknesses = [4, 6, 8, 10, 12, 15, 19];
 
@@ -204,6 +206,17 @@ export default function Sales() {
 
     const selectClient = clients?.find((c) => c.id == customer_id);
     setClientUsed(selectClient);
+  };
+
+  const HandleUpdateStateSale = async (Measurement: Measurement, stateSale: Measurement["estadoVenta"]) =>{
+    try{
+      Measurement.estadoVenta = stateSale;
+      await updateMeasurement(Measurement);
+    }catch(e){
+      console.log("Se presento un error: ",e);
+    }finally{
+      setOnchange(prev => !prev);
+    }
   };
 
   //agrega el nuevo cliente a la lista de clientes ya precargados sin tener q volver a renderizar
@@ -490,11 +503,14 @@ export default function Sales() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         defaultValue={sale.estadoVenta}
+                        onChange={(e) =>(HandleUpdateStateSale(sale, e.target.value as Measurement["estadoVenta"]))}
                         className={`px-2 py-1 rounded-full text-xs font-medium border-0 ${
                           statusColors[
                             sale.estadoVenta as keyof typeof statusColors
-                          ]
-                        }`}
+                          ] 
+                        } ${onChange &&  statusColors[
+                            sale.estadoVenta as keyof typeof statusColors
+                          ] }`}
                       >
                         <option value="Cancelado">Cancelado</option>
                         <option value="En Proceso">En Proceso</option>
