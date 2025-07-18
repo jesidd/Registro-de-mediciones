@@ -16,7 +16,6 @@ const AppRoute = () => {
         <Route path="/quotes" element={<div>Proximamente</div>} />
         <Route path="/sales" element={<Sales/>} />
         <Route path="/customers" element={<Customers/>} />
-        <Route path="/inventory" element={<div>Proximamente</div>} />
         <Route path="/reports" element={<div>Proximamente</div>} />
         <Route path="/settings" element={<div>Proximamente</div>} />
       </Route>

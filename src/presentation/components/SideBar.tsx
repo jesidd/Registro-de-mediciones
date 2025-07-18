@@ -3,7 +3,6 @@ import {
   FileText, 
   ShoppingCart, 
   Users, 
-  Package, 
   BarChart3, 
   Settings,
   Menu,
@@ -24,7 +23,6 @@ const menuItems = [
   { id: 'quotes', icon: FileText, label: 'Cotizaciones' },
   { id: 'sales', icon: ShoppingCart, label: 'Ventas' },
   { id: 'customers', icon: Users, label: 'Clientes' },
-  { id: 'inventory', icon: Package, label: 'Inventario' },
   { id: 'reports', icon: BarChart3, label: 'Reportes' },
   { id: 'settings', icon: Settings, label: 'Configuración' }
 ];
