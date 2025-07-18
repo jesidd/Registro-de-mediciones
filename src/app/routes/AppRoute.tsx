@@ -3,6 +3,7 @@ import Login from "../../presentation/pages/Login";
 import HomeLayaout from "../../presentation/layouts/HomeLayaout";
 import Customers from "../../presentation/pages/Customers";
 import Sales from "../../presentation/pages/Sales";
+import Dashboard from "../../presentation/pages/Dashboard";
 
 
 const AppRoute = () => {
@@ -11,7 +12,7 @@ const AppRoute = () => {
       <Route path="/" element={<Login />} />
 
       <Route element={<HomeLayaout/>} >
-        <Route path="/dashboard" element={<div>Proximamente</div>} />
+        <Route path="/dashboard" element={<Dashboard/>} />
         <Route path="/quotes" element={<div>Proximamente</div>} />
         <Route path="/sales" element={<Sales/>} />
         <Route path="/customers" element={<Customers/>} />
