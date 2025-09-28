@@ -118,7 +118,7 @@ function Dashboard() {
                       {Clients ? Clients?.find((c) => c.id == order.clienteId)?.nombre : ""}
                     </p>
                     <p className="text-xs md:text-sm text-gray-600">
-                      ${recentOrdersCosto ? recentOrdersCosto[order.id].toLocaleString() : 0}
+                      ${recentOrdersCosto ? recentOrdersCosto[order.id]?.toLocaleString() : 0}
                     </p>
                   </div>
                 </div>
