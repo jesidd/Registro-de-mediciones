@@ -1,8 +1,10 @@
 export interface Measurement{
-  id?: number,
+  id: number,
   descripcion: string,
   hayMasDeUnPiso: true,
   fechaRegistro: string,
   fechaEntrega: string,
+  estadoVenta: "En Proceso" | "Cancelado" | "Completado",
   clienteId: number,
+  cantidadPisos: number
 }

@@ -3,7 +3,6 @@ import {
   FileText, 
   ShoppingCart, 
   Users, 
-  Package, 
   BarChart3, 
   Settings,
   Menu,
@@ -24,7 +23,6 @@ const menuItems = [
   { id: 'quotes', icon: FileText, label: 'Cotizaciones' },
   { id: 'sales', icon: ShoppingCart, label: 'Ventas' },
   { id: 'customers', icon: Users, label: 'Clientes' },
-  { id: 'inventory', icon: Package, label: 'Inventario' },
   { id: 'reports', icon: BarChart3, label: 'Reportes' },
   { id: 'settings', icon: Settings, label: 'Configuración' }
 ];
@@ -71,7 +69,7 @@ export default function Sidebar({ isOpen, onToggle, onClose, activeSection }: Si
               return (
                 <li key={item.id}>
                   <button
-                    onClick={()=>navigate(`/${item.id}`)}
+                    onClick={()=>{navigate(`/${item.id}`); onToggle()}}
                     className={`w-full flex items-center space-x-2 lg:space-x-3 px-3 py-2 lg:py-3 rounded-lg transition-colors text-sm lg:text-base ${
                       activeSection === item.id
                         ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'

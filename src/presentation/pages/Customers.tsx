@@ -10,7 +10,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import CardInfo1 from "./CardsInfo";
+import CardInfo1 from "../components/CardsInfo";
 import {
   BuildingIcon,
   GroupPeopleIcon,
@@ -18,7 +18,7 @@ import {
   IconDolar,
 } from "../../assets/icons/icons";
 import type { Client } from "../../domain/entities/Client";
-import UseClient from "../hooks/UseClient";
+import useClient from "../hooks/useClient";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import MySwal from "../../infrastructure/di/Sweetalert2";
 import { typeColors } from "../../domain/entities/User";
@@ -36,7 +36,7 @@ export default function Customers() {
     updateClient,
     deleteClient,
     getTotalClientsByType,
-  } = UseClient();
+  } = useClient();
 
   const [cantCustomersType, setCantCustomersType] = useState<CantCustomerType>({
     constructora: 0,
@@ -58,8 +58,8 @@ export default function Customers() {
     const fetchData = async () => {
       try {
         const clients = await getClients();
-        const totalConstructora = await getTotalClientsByType("CONSTRUCTORA");
-        const totalVidreria = await getTotalClientsByType("EMPRESA");
+        const totalConstructora = await getTotalClientsByType("Constructora");
+        const totalVidreria = await getTotalClientsByType("Empresa");
         const totalAcomulado = clients.reduce(
           (suma, client) => suma + client.gasto,
           0
@@ -91,9 +91,9 @@ export default function Customers() {
   }, [refreshClientes]);
 
   const customerTypes: Client["tipoCliente"][] = [
-    "CONSTRUCTORA",
-    "EMPRESA",
-    "CLIENTE_PARTICULAR",
+    "Constructora",
+    "Empresa",
+    "Cliente Particular",
   ];
 
   const handleSaveCustomer: SubmitHandler<Client> = async (data) => {
