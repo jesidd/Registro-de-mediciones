@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, removeToken } from '../utils/storage/Token';
 
 const AxiosClient = axios.create({
-    baseURL: 'https://medividrios-f7dpb3dcdjc0gdae.canadacentral-01.azurewebsites.net/api/',
+    baseURL: 'https://medividrios-production.up.railway.app/api/',
     timeout: 20000, // 20 seconds timeout
 });
 
